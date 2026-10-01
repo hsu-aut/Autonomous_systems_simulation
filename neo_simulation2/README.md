@@ -188,9 +188,10 @@ terminal prints `You can start planning now!` before sending goals to MoveIt.
 > **Note:** `--show-args` lists approximately 30 options. Options not listed above are forwarded to the
 > included launch files; keep their default values.
 
-> **Note:** The project is configured for `my_robot:=mpo_700` with `arm_type:=ur10` (the defaults). The
-> other robot and arm types originate from Neobotix and are not configured for this project. The `ur5`,
-> `ur5e` and `ur10e` configurations have no gripper controller.
+> **Note:** The project is configured and tested for `my_robot:=mpo_700` with `arm_type:=ur10` (the
+> defaults). With `arm_type:=ur5`, `ur5e` or `ur10e`, the arm and gripper controllers start; MoveIt and
+> navigation are tested with `ur10` only. The other robot types originate from Neobotix and are not
+> configured for this project.
 
 Examples:
 
@@ -245,7 +246,7 @@ ros2 launch neo_simulation2 navigation.launch.py map:=neo_workshop
 2. Start map building (terminal 2):
 
    ```bash
-   ros2 launch neo_simulation2 mapping.launch.py use_sim_time:=True
+   ros2 launch neo_simulation2 mapping.launch.py
    ```
 
 3. Drive the robot through the whole world (terminal 3):
@@ -262,8 +263,8 @@ ros2 launch neo_simulation2 navigation.launch.py map:=neo_workshop
 
 After saving, the option `map:=<name>` is available in `bringup.launch.py` and `navigation.launch.py`.
 
-> **Note:** Always set `use_sim_time:=True` for this launch file; its default is `False`. See also the
-> [known issue](../README.md#8-known-issues) about its parameter file.
+> **Note:** Map building uses the simulation time and the parameters in `configs/mpo_700/mapping.yaml`
+> (scan topic `lidar_1/scan_filtered`).
 
 ### robot_description.launch.py
 
@@ -300,7 +301,7 @@ Use of the lidar topics:
 | --- | --- |
 | Localisation (`neo_localization2`) | `/scan` |
 | Navigation costmaps | `lidar_1/scan_filtered` and `lidar_2/scan_filtered`, as separate sources |
-| Map building (`slam_toolbox`) | Physical robot: `lidar_1/scan_filtered`. Simulation: currently `/scan` (see [known issues](../README.md#8-known-issues)). |
+| Map building (`slam_toolbox`) | `lidar_1/scan_filtered` |
 
 ### Differences
 
@@ -316,7 +317,7 @@ Use of the lidar topics:
 | Lidar limiting and merging | `sim_scan_filter.py` | `neo_scan_filter_node` and `topic_tools relay` | The packages of the physical robot are not part of this workspace |
 | MoveIt planners | OMPL and Pilz | OMPL | Pilz provides straight-line motions for grasping |
 | Grasp frames | `grasp_tcp`, `grasp_tip`, `gripper_tcp` | `gripper_tcp` | Exact finger centre and fingertip for grasp planning |
-| Clock | Simulation time | System clock | |
+| Clock | Simulation time (see [known issues](../README.md#8-known-issues)) | System clock | Gazebo provides the clock |
 
 ### Source of the settings
 

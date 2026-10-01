@@ -45,7 +45,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource([nav2_launch_file_dir, '/mapping.launch.py']),
         launch_arguments={
             'use_sim_time': 'true',
-            'params_file': param_file_arg,
+            'param_file': param_file_arg,
         }.items(),
     )
 

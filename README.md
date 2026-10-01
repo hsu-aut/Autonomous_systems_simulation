@@ -275,9 +275,7 @@ The following messages appear in every run. They do not indicate a fault.
 
 | Issue | Effect |
 | --- | --- |
-| `neo_simulation2/launch/mapping.launch.py` passes its parameter file as `params_file`, but the included launch file expects `param_file` | Map building ignores `configs/mpo_700/mapping.yaml` and uses the defaults of `neo_nav2_bringup` (scan topic `/scan`) |
-| `use_sim_time` is missing in the `controller_server`, `neo_localization2_node` and `waypoint_follower` sections of `configs/mpo_700/navigation.yaml` | These nodes use the system clock instead of the simulation time |
-| The `ur5`, `ur5e` and `ur10e` controller files define no `robotiq_gripper_controller` | With `arm_type` other than `ur10`, the gripper controller does not start |
+| `use_sim_time` is missing in the `controller_server`, `neo_localization2_node` and `waypoint_follower` sections of `configs/mpo_700/navigation.yaml` | These nodes use the system clock instead of the simulation time. Adding the key is under test: with `neo_localization2_node` on simulation time, one navigation test failed because the `map` → `odom` transform was out of date. |
 
 ---
 
