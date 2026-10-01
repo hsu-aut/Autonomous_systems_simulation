@@ -26,6 +26,12 @@
   <exec_depend>urdf</exec_depend>
   <exec_depend>warehouse_ros_sqlite</exec_depend>
   <exec_depend>xacro</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>pilz_industrial_motion_planner</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <!-- With use_gazebo:=true the launch file reads the robot description of neo_simulation2.
+       It is not declared here: neo_simulation2 already depends on this package, and a
+       dependency in both directions is a cycle that colcon rejects. -->
 
   <export>
     <build_type>ament_cmake</build_type>
