@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="mpo_700">
+
+    <!--Gazebo Wheel Macro-->
+    <xacro:macro name="gazebo_mpo_700_wheel" params="
+      wheel_prefix
+      ">
+        <gazebo reference="${wheel_prefix}_link">
+            <mu1>0.05</mu1>
+            <mu2>0.05</mu2>
+            <!-- Wheel contact was kp = 1e5, kd = 10. Neobotix's world used to
+                 carry fifteen "wall sticker" models whose plane collisions ignore
+                 their pose in ODE, i.e. fifteen extra floor planes stacked on the
+                 real one, which made the wheel contact roughly sixteen times
+                 stiffer and better damped by accident. With the stickers removed
+                 the base bounced on its own wheel springs at about 8 Hz and never
+                 settled (0.13 to 0.17 m/s of ground-truth velocity while parked,
+                 sunk 21 mm, arm and controllers active).
+
+                 kd = 10 was ~0.3 percent of critical damping for a 130 kg robot
+                 on four such contacts. kd = 1000 alone calmed the bare base but
+                 not the base with the arm held by gazebo_ros2_control, whose
+                 per-step joint teleports keep kicking a soft contact. Raising kp
+                 to 1e6 as well puts the contact back in the regime the stacked
+                 planes gave (ERP 0.91, CFM 9e-5 at the 10 ms step).
+
+                 No colon followed by a space in this comment, on purpose.
+                 gazebo_ros2_control passes the whole URDF to controller_manager
+                 as a command-line parameter override that rcl parses as YAML,
+                 and that sequence makes the parse fail, so controller_manager
+                 never starts and the arm hangs limp. Run
+                 scripts/check_urdf_for_ros2_control.py after editing. -->
+            <kp>1000000.0</kp>
+            <kd>1000.0</kd>
+        </gazebo>
+    </xacro:macro>
+
+</robot>

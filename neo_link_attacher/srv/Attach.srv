@@ -1,0 +1,11 @@
+# Rigidly join link2 of model2 to link1 of model1 with a fixed joint (attach),
+# or remove that joint again (detach). Names are Gazebo names, i.e. AFTER
+# sdformat has lumped fixed-joint chains: the Robotiq base on this robot is
+# part of ur10wrist_3_link, not robotiq_140_base_link.
+string model1
+string link1
+string model2
+string link2
+---
+bool ok
+string message

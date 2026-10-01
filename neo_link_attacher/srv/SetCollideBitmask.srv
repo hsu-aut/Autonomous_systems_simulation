@@ -1,0 +1,14 @@
+# Set the collision bitmask on every collision of a link (or of every link in
+# the model when link is empty). Two collisions interact only when the bitwise
+# AND of their masks is non-zero; the default is 0xFFFF.
+#
+# Used to stop a grasped object and the gripper fingers from colliding: the
+# object gets 0x0001, the finger links get 0xFFFE. Both still collide with
+# everything else (0xFFFF & either is non-zero), just not with each other.
+string model
+string link
+uint32 bitmask
+---
+bool ok
+string message
+uint32 collisions_changed

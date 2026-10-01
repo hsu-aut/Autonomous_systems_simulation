@@ -1,0 +1,28 @@
+# Objects placed in the Gazebo world by spawn_objects.
+#
+# Each object is listed under "objects" and has its own section, named after it.
+# The name is the Gazebo model name; other nodes find the object by it.
+#
+#   position  [x, y, z] of the object's centre, in the world (= map) frame, metres.
+#             A box of height h standing on a table of height t: z = t + h/2.
+#   yaw       turn about the vertical axis, radians (optional, default 0)
+#   size      [x, y, z] in metres - a box is generated (with mass, friction and
+#             contact settings that keep it steady between gripper fingers)
+#   mass      kg, for a generated box (optional, default 0.2)
+#   color     [red, green, blue], 0 to 1, for a generated box (optional)
+#   model     instead of size: an SDF file - a full path, or a file in this
+#             package's models/ folder
+#
+# If an object already exists, it is moved back to its position (reset: true).
+
+spawn_objects:
+  ros__parameters:
+    reset: true
+    objects: [cube]
+
+    cube:
+      size: [0.1, 0.1, 0.1]
+      # On the first cafe table (centre -1.492, -4.548; top at 0.775 m), 0.35 m
+      # towards where the robot parks: inside the table top, about 0.6 m from the
+      # robot, which the arm reaches reliably. 0.775 + 0.1 / 2 = 0.825.
+      position: [-1.492, -4.198, 0.825]

@@ -1,0 +1,183 @@
+# Mirrors the real robot's controllers, which come from ur_robot_driver's stock
+# config/ur_controllers.yaml with tf_prefix ur10 (neo_mpo_700-2/configs/ur/
+# ur_control.launch.py). Deliberate simulation-only differences:
+#   - joint_trajectory_controller is the active arm controller, not
+#     scaled_joint_trajectory_controller: Gazebo has no speed-scaling interface.
+#   - trajectory tolerance 1.0 rad instead of the driver's 0.2 (reason below).
+#   - update_rate 100 Hz instead of 125 (reason at update_rate).
+#   - robotiq_gripper_controller runs here; on the robot it has its own
+#     controller_manager in namespace robotiq_gripper. gripper_action_relay.py
+#     serves the real action name.
+#   - ur_configuration_controller is absent: it needs the real controller's
+#     software-version interfaces.
+#   - joint_state_broadcaster lists its joints explicitly (reason at the bottom).
+controller_manager:
+  ros__parameters:
+    # The real UR10 (CB3) runs at 125 Hz (ur_robot_driver ur10_update_rate.yaml),
+    # but gazebo_ros2_control cannot run faster than the world's physics step of
+    # 0.01 s and rejects 125 with "controller update period is faster than the
+    # gazebo simulation period".
+    update_rate: 100 # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    io_and_status_controller:
+      type: ur_controllers/GPIOController
+
+    speed_scaling_state_broadcaster:
+      type: ur_controllers/SpeedScalingStateBroadcaster
+
+    force_torque_sensor_broadcaster:
+      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    robotiq_gripper_controller:
+      type: position_controllers/GripperActionController
+
+    scaled_joint_trajectory_controller:
+      type: ur_controllers/ScaledJointTrajectoryController
+
+    forward_velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
+
+    forward_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+speed_scaling_state_broadcaster:
+  ros__parameters:
+    state_publish_rate: 100.0
+    tf_prefix: "ur10"
+
+io_and_status_controller:
+  ros__parameters:
+    tf_prefix: "ur10"
+
+force_torque_sensor_broadcaster:
+  ros__parameters:
+    sensor_name: ur10tcp_fts_sensor
+    state_interface_names:
+      - force.x
+      - force.y
+      - force.z
+      - torque.x
+      - torque.y
+      - torque.z
+    frame_id: ur10tool0
+    topic_name: ft_data
+
+joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - ur10shoulder_pan_joint
+      - ur10shoulder_lift_joint
+      - ur10elbow_joint
+      - ur10wrist_1_joint
+      - ur10wrist_2_joint
+      - ur10wrist_3_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    # trajectory tolerance is 1.0 rad, not the upstream 0.2. At 0.2 every arm motion
+    # that extended much past ~0.65 m aborted with "path tolerance violation", and
+    # once one aborted, every later move including returning home aborted too. The
+    # arm was not stuck: gazebo_ros2_control tracks with enough transient error during
+    # a large move to trip 0.2, while still reaching the goal. Measured with 1.0:
+    # full 0.95 m reach 3/3, and the cascade disappears. Tighter values were measured
+# on a 12-move protocol and are not sufficient: 0.5 -> 5/12, 0.8 -> 3/12, with the
+# far reach failing 3/3 in both. goal tolerance is deliberately
+    # left at 0.1 so final accuracy is still enforced.
+    constraints:
+      stopped_velocity_tolerance: 0.2
+      goal_time: 0.0
+      ur10shoulder_pan_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10shoulder_lift_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10elbow_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10wrist_1_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10wrist_2_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10wrist_3_joint: { trajectory: 1.0, goal: 0.1 }
+
+scaled_joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - ur10shoulder_pan_joint
+      - ur10shoulder_lift_joint
+      - ur10elbow_joint
+      - ur10wrist_1_joint
+      - ur10wrist_2_joint
+      - ur10wrist_3_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    constraints:
+      stopped_velocity_tolerance: 0.2
+      goal_time: 0.0
+      ur10shoulder_pan_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10shoulder_lift_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10elbow_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10wrist_1_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10wrist_2_joint: { trajectory: 1.0, goal: 0.1 }
+      ur10wrist_3_joint: { trajectory: 1.0, goal: 0.1 }
+    speed_scaling_interface_name: ur10speed_scaling/speed_scaling_factor
+
+forward_velocity_controller:
+  ros__parameters:
+    joints:
+      - ur10shoulder_pan_joint
+      - ur10shoulder_lift_joint
+      - ur10elbow_joint
+      - ur10wrist_1_joint
+      - ur10wrist_2_joint
+      - ur10wrist_3_joint
+    interface_name: velocity
+
+forward_position_controller:
+  ros__parameters:
+    joints:
+      - ur10shoulder_pan_joint
+      - ur10shoulder_lift_joint
+      - ur10elbow_joint
+      - ur10wrist_1_joint
+      - ur10wrist_2_joint
+      - ur10wrist_3_joint
+
+robotiq_gripper_controller:
+  ros__parameters:
+    default: true
+    joint: finger_joint
+    allow_stalling: true
+    max_effort: 100.0
+    stall_velocity_threshold: 0.001
+    stall_timeout: 2.0
+
+# gazebo_ros2_control registers mimic joints under "<joint>_mimic" (see
+# gazebo_system.cpp). Those names do not exist in the URDF, so publishing them
+# makes MoveIt log "Joint '<name>_mimic' not found in model" for every state
+# update. Listing the real joints explicitly keeps them out of /joint_states.
+# The mimic joints still move: gazebo_ros2_control drives them from finger_joint,
+# and robot_state_publisher derives their TF via the URDF <mimic> tags.
+joint_state_broadcaster:
+  ros__parameters:
+    joints:
+      - ur10shoulder_pan_joint
+      - ur10shoulder_lift_joint
+      - ur10elbow_joint
+      - ur10wrist_1_joint
+      - ur10wrist_2_joint
+      - ur10wrist_3_joint
+      - finger_joint
+    interfaces:
+      - position
+      - velocity

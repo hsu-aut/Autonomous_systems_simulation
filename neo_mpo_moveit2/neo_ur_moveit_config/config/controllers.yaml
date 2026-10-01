@@ -1,0 +1,40 @@
+controller_names:
+  - scaled_joint_trajectory_controller
+  - joint_trajectory_controller
+  - robotiq_gripper
+
+scaled_joint_trajectory_controller:
+  action_ns: follow_joint_trajectory
+  type: FollowJointTrajectory
+  default: true
+  joints:
+    - $(var prefix)shoulder_pan_joint
+    - $(var prefix)shoulder_lift_joint
+    - $(var prefix)elbow_joint
+    - $(var prefix)wrist_1_joint
+    - $(var prefix)wrist_2_joint
+    - $(var prefix)wrist_3_joint
+
+joint_trajectory_controller:
+  action_ns: follow_joint_trajectory
+  type: FollowJointTrajectory
+  default: false
+  joints:
+    - $(var prefix)shoulder_pan_joint
+    - $(var prefix)shoulder_lift_joint
+    - $(var prefix)elbow_joint
+    - $(var prefix)wrist_1_joint
+    - $(var prefix)wrist_2_joint
+    - $(var prefix)wrist_3_joint
+
+# Same as the real robot's copy. MoveIt builds the action name as
+# "<controller name>/<action_ns>", giving
+# /robotiq_gripper/robotiq_gripper_controller/gripper_cmd: the real driver runs in
+# namespace robotiq_gripper, and in simulation gripper_action_relay.py
+# (neo_simulation2) serves that name in front of the Gazebo controller.
+robotiq_gripper:
+  action_ns: robotiq_gripper_controller/gripper_cmd
+  type: GripperCommand
+  default: true
+  joints:
+    - finger_joint

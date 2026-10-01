@@ -1,0 +1,19 @@
+# Excluded from this repository
+/mpo_700_workspace/
+/docs/
+/neo_pick_place/
+
+# colcon build output (in case a build is run inside this folder)
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+
+# Claude Code
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json

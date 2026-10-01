@@ -1,0 +1,245 @@
+<?xml version="1.0"?>
+<!-- This is the URDF file for Robotiq 2f 140 Gripper-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotiq_gripper">
+
+            <!-- ur_adapter for gripper-->
+            <xacro:include filename="$(find robotiq_description)/urdf/ur_to_robotiq_adapter.urdf.xacro"/>
+            <xacro:ur_to_robotiq
+                prefix=""
+                parent="$(arg tf_prefix)tool0"
+                child="neo_gripper_mount_link"
+                rotation="${pi/2}"
+                />
+
+            <!-- Serial port of the real gripper. Only used when use_gazebo is false. -->
+            <xacro:arg name="gripper_com_port" default="/dev/ttyUSB0"/>
+
+            <!-- add gripper.
+                 This file follows the same use_gazebo switch as mpo_700.urdf.xacro
+                 and ur_arm.urdf.xacro - everything Gazebo-specific lives inside
+                 xacro:if blocks so that use_gazebo:=false yields a description that
+                 loads on the real robot. -->
+            <xacro:include filename="$(find robotiq_description)/urdf/robotiq_2f_140_macro.urdf.xacro"/>
+
+            <xacro:if value="$(arg use_gazebo)">
+                <!-- include_ros2_control is false - upstream's block emits the
+                     modern-Gazebo plugin (gz_ros2_control/GazeboSimSystem), which
+                     Classic cannot load. The Classic-compatible ros2_control block
+                     is declared further down, inside this same xacro:if. -->
+                <xacro:robotiq_gripper name="robotiq_gripper" prefix="" parent="neo_gripper_mount_link" include_ros2_control="false">
+                    <origin xyz="0 0 0" rpy="0 0 -${pi / 2}"/>
+                </xacro:robotiq_gripper>
+            </xacro:if>
+
+            <xacro:unless value="$(arg use_gazebo)">
+                <!-- Real hardware - upstream's ros2_control block with every sim flag
+                     off resolves to robotiq_driver/RobotiqGripperHardwareInterface
+                     talking Modbus RTU on gripper_com_port. It exposes the same
+                     finger_joint interfaces and is driven by the same
+                     robotiq_gripper_controller, so nothing above the hardware
+                     layer changes between simulation and the robot. -->
+                <xacro:robotiq_gripper name="robotiq_gripper" prefix="" parent="neo_gripper_mount_link"
+                                       include_ros2_control="true"
+                                       sim_gazebo="false" sim_isaac="false" use_fake_hardware="false"
+                                       com_port="$(arg gripper_com_port)">
+                    <origin xyz="0 0 0" rpy="0 0 -${pi / 2}"/>
+                </xacro:robotiq_gripper>
+            </xacro:unless>
+
+            <xacro:if value="$(arg use_gazebo)">
+            <!-- Gazebo materials for the gripper.
+                 The 2F-140 visual meshes are .stl, which carries no colour, and the
+                 URDF <material> elements are unnamed so Gazebo Classic discards them -
+                 every link would otherwise render default white. The rgba values below
+                 mirror the ones in the 2F-140 URDF. -->
+            <xacro:macro name="robotiq_gazebo_colour" params="link rgba">
+                <gazebo reference="${link}">
+                    <visual>
+                        <material>
+                            <ambient>${rgba}</ambient>
+                            <diffuse>${rgba}</diffuse>
+                        </material>
+                    </visual>
+                </gazebo>
+            </xacro:macro>
+
+            <xacro:property name="rq_black" value="0.1 0.1 0.1 1"/>
+            <xacro:property name="rq_alu"   value="0.792157 0.819608 0.933333 1"/>
+
+            <xacro:robotiq_gazebo_colour link="robotiq_140_base_link"   rgba="${rq_black}"/>
+            <xacro:robotiq_gazebo_colour link="left_outer_finger"       rgba="${rq_black}"/>
+            <xacro:robotiq_gazebo_colour link="left_inner_finger"       rgba="${rq_black}"/>
+            <xacro:robotiq_gazebo_colour link="left_inner_knuckle"      rgba="${rq_black}"/>
+            <xacro:robotiq_gazebo_colour link="right_outer_finger"      rgba="${rq_black}"/>
+            <xacro:robotiq_gazebo_colour link="right_inner_finger"      rgba="${rq_black}"/>
+            <xacro:robotiq_gazebo_colour link="right_inner_knuckle"     rgba="${rq_black}"/>
+            <xacro:robotiq_gazebo_colour link="left_outer_knuckle"      rgba="${rq_alu}"/>
+            <xacro:robotiq_gazebo_colour link="right_outer_knuckle"     rgba="${rq_alu}"/>
+            <!-- The finger pads are attached by fixed joints, so sdformat lumps them
+                 into the inner fingers and they inherit that link's colour. Setting a
+                 colour on the pad links directly would have no effect. -->
+            </xacro:if>
+
+            <!-- Virtual grasp frames.
+
+                 These are massless, geometry-less links on fixed joints, so
+                 sdformat drops them from the SDF entirely and Gazebo never sees
+                 them. robot_state_publisher still puts them on TF, which is the
+                 point - they give motion planning a stable tool reference.
+
+                 Why they are needed. The obvious reference point for a grasp is
+                 the midpoint between the two finger pads, and that is what this
+                 package used to compute from live TF. It is wrong twice over -
+
+                   1. It MOVES. The 2F-140 fingers swing on a four-bar linkage, so
+                      the pad midpoint travels 23.7 mm further from the gripper
+                      base as finger_joint goes 0.00 -> 0.70. A tool frame sampled
+                      from TF therefore means something different at every stage of
+                      the grasp, and the approach and the close plan against
+                      different references.
+
+                   2. It is NOT the lowest point. The pad frame origin sits at the
+                      CENTRE of the pad face; the fingertip geometry continues
+                      35 mm beyond it. Commanding the pad midpoint onto the centre
+                      of a 50 mm cube standing on a 0.775 m tabletop put the
+                      fingertips at 0.765 m - 10 mm inside the table - and the arm
+                      stalled against it and shoved the cube.
+
+                 So there are two frames, both fixed to robotiq_140_base_link -
+
+                   grasp_tcp  the grasp centre. Targets are planned for this.
+                   grasp_tip  the furthest point of the fingertips. Nothing may be
+                              commanded that puts THIS below an obstacle.
+
+                 Both offsets are along +z of robotiq_140_base_link, which is the
+                 approach axis (it points out of the gripper, away from the arm).
+
+                 They are measured at DIFFERENT finger angles, on purpose -
+
+                   grasp_tcp_z at finger_joint = 0. The grasp centre barely moves
+                               (11 mm over the working range) and the approach is
+                               planned with the gripper open, so this is the right
+                               reference for positioning.
+
+                   grasp_tip_z at finger_joint = 0.70, fully closed. The fingertips
+                               are NOT static - the four-bar linkage sweeps them a
+                               further 23.7 mm away from the base as they close. An
+                               earlier version of this file used the open value,
+                               0.2120, and the descent duly left 15 mm of air under
+                               the fingertips - which the fingers then ate on the
+                               way shut, stalling on the tabletop at q = 0.30 with
+                               the cube still sitting untouched between them.
+                               Sizing for the fully-closed case means even a grasp
+                               that misses the object entirely closes in free air.
+
+                 Both offsets are derived from the finger meshes of the URDF. -->
+            <xacro:property name="grasp_tcp_z" value="0.1770"/>
+            <xacro:property name="grasp_tip_z" value="0.2357"/>
+
+            <link name="grasp_tcp"/>
+            <joint name="grasp_tcp_joint" type="fixed">
+                <parent link="robotiq_140_base_link"/>
+                <child link="grasp_tcp"/>
+                <origin xyz="0 0 ${grasp_tcp_z}" rpy="0 0 0"/>
+            </joint>
+
+            <link name="grasp_tip"/>
+            <joint name="grasp_tip_joint" type="fixed">
+                <parent link="robotiq_140_base_link"/>
+                <child link="grasp_tip"/>
+                <origin xyz="0 0 ${grasp_tip_z}" rpy="0 0 0"/>
+            </joint>
+
+            <!-- The real robot's grasp frame, same name and offset as in
+                 neo_mpo_700-2/robot_model/mpo_700/mpo_700.urdf.xacro, so anything
+                 written against it (e.g. setEndEffectorLink("gripper_tcp")) works
+                 on both. It is the pad midpoint at one nominal opening, which is
+                 the approximation described above; precise grasp planning uses
+                 grasp_tcp and grasp_tip instead. -->
+            <link name="gripper_tcp"/>
+            <joint name="gripper_tcp_joint" type="fixed">
+                <parent link="robotiq_140_base_link"/>
+                <child link="gripper_tcp"/>
+                <origin xyz="0 0 0.190" rpy="0 0 0"/>
+            </joint>
+
+            <xacro:if value="$(arg use_gazebo)">
+            <!-- ros2_control for Classic Gazebo.
+                 finger_joint is the only actuated joint. Classic Gazebo does NOT
+                 enforce URDF <mimic> tags in physics, so every mimicking joint must
+                 also be declared here with mimic/multiplier params - otherwise
+                 gazebo_ros2_control leaves them free and the linkage falls apart.
+
+                 ===============================================================
+                 Why this uses "position" and not "position_pid", even though
+                 "position" is what ejects grasped objects.
+
+                 With "position", GazeboSystem drives the joint with SetPosition() -
+                 a KINEMATIC teleport that ignores whatever is in the way and
+                 leaves the contact solver to resolve the interpenetration. Closing
+                 on a 100 mm cube, the fingers sweep through it and the solver fires
+                 it across the table. That is a real defect and it is why the
+                 friction grasp does not work.
+
+                 "position_pid" is the principled fix - GazeboSystem then runs a PID
+                 on position error and applies it through SetForce(), so an object
+                 between the pads actually stops the fingers. It was tried here and
+                 it does not survive this model's numbers -
+
+                   finger link inertia   ~2.9e-6 kg m^2   (they are hollow shells)
+                   world timestep         0.01 s          (neo_workshop.world)
+                   finger_joint travel    0.71 rad total
+
+                 Any force big enough to grip is enormous compared to that inertia.
+                 At the 10 Nm effort limit the joint gains 34000 rad/s in ONE step;
+                 it blows straight through its own end stop, and finger_joint was
+                 observed at 2.55 rad against a 0.7 rad limit, with the linkage torn
+                 apart on screen. Working back from stability instead, omega_n*dt
+                 must stay under ~0.1, which caps kp at 3e-4 and yields essentially
+                 zero grip force. There is no usable window.
+
+                 To make force control viable here, one of these has to change -
+                   - inflate the finger inertias by ~3000x (to ~1e-2), the standard
+                     Gazebo trick for light gripper fingers, which buys kp ~ 1 and
+                     about 7.8 N per pad; or
+                   - cut max_step_size well below 0.01 s, at a real cost in
+                     simulation speed.
+
+                 Until then the grasp is made reliable by attaching the object with
+                 a fixed joint once the fingers are closed on it (neo_link_attacher),
+                 which is what gazebo_grasp_plugin does and what most Gazebo Classic
+                 grasping setups rely on. -->
+            <xacro:macro name="robotiq_mimic_joint" params="name multiplier">
+                <joint name="${name}">
+                    <param name="mimic">finger_joint</param>
+                    <param name="multiplier">${multiplier}</param>
+                    <command_interface name="position"/>
+                    <state_interface name="position"/>
+                    <state_interface name="velocity"/>
+                </joint>
+            </xacro:macro>
+
+            <ros2_control name="robotiq_gripper" type="system">
+                <hardware>
+                    <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+                </hardware>
+                <joint name="finger_joint">
+                    <command_interface name="position">
+                        <param name="min">0.0</param>
+                        <param name="max">0.7</param>
+                    </command_interface>
+                    <state_interface name="position">
+                        <param name="initial_value">0.0</param>
+                    </state_interface>
+                    <state_interface name="velocity"/>
+                </joint>
+                <!-- multipliers must match the <mimic> tags in the 2F-140 URDF -->
+                <xacro:robotiq_mimic_joint name="left_inner_knuckle_joint"  multiplier="-1"/>
+                <xacro:robotiq_mimic_joint name="left_inner_finger_joint"   multiplier="1"/>
+                <xacro:robotiq_mimic_joint name="right_outer_knuckle_joint" multiplier="-1"/>
+                <xacro:robotiq_mimic_joint name="right_inner_knuckle_joint" multiplier="-1"/>
+                <xacro:robotiq_mimic_joint name="right_inner_finger_joint"  multiplier="1"/>
+            </ros2_control>
+            </xacro:if>
+
+</robot>

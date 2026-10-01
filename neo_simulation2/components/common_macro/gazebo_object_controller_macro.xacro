@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="mpo">
+
+    <!--Gazebo Object Controller Macro-->
+    <xacro:macro name="gazebo_object_controller" params="
+        odom_update_rate 
+        controller_update_rate
+        odom_frame
+        base_frame
+        covariance_yaw
+        cmd_timeout:=0.0
+        ">
+
+        <gazebo>
+            <!-- neo_planar_move is Humble's gazebo_ros_planar_move with one change.
+                 The stock plugin writes (vx, vy, 0) linear and (0, 0, wz) angular to
+                 every link on every physics step, so the robot can never settle on
+                 its wheel contacts - it re-drops ~0.1 mm each step and the arm
+                 zigzags visibly. The copy holds x, y and yaw the same way but leaves
+                 z, roll and pitch to physics. See neo_gazebo_plugins. -->
+            <plugin name="object_controller" filename="libneo_planar_move.so">
+                <commandTopic>cmd_vel</commandTopic>
+                <odometryTopic>odom</odometryTopic>
+                <robotNamespace><remapping>/tf:=tf</remapping></robotNamespace>
+                <ros>    <remapping>/tf:=tf</remapping>    </ros>
+    
+                <!-- Set odom publish rate -->
+                <odometryRate>${odom_update_rate}</odometryRate>
+    
+                <!-- Control loop rate, i.e. how often the commanded velocity is
+                     re-applied (the real omnidrive runs at control_rate 100 Hz).
+                     Without update_rate the plugin defaulted to 20 Hz, and wheel
+                     friction between updates held the base at about two thirds
+                     of the commanded speed. -->
+                <update_rate>${controller_update_rate}</update_rate>
+                <!-- Odometry and odom TF publish rate -->
+                <publish_rate>${controller_update_rate}</publish_rate>
+
+                <!-- Stop when cmd_vel goes quiet for this long (s). 0 disables. -->
+                <cmd_timeout>${cmd_timeout}</cmd_timeout>
+    
+                <!-- Set if odom required -->
+                <publish_odom>true</publish_odom>
+                <publish_odom_tf>true</publish_odom_tf>
+    
+                <!-- Frame IDs -->
+                <odometry_frame>${odom_frame}</odometry_frame>
+                <robot_base_frame>${base_frame}</robot_base_frame>
+    
+                <!-- Set odom covariance -->
+                <covariance_x>0.0001</covariance_x>
+                <covariance_y>0.0001</covariance_y>
+                <covariance_yaw>${covariance_yaw}</covariance_yaw>
+            </plugin>  
+        </gazebo>
+    </xacro:macro>
+      
+</robot>
