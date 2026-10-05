@@ -5,6 +5,8 @@
 #     scaled_joint_trajectory_controller: Gazebo has no speed-scaling interface.
 #   - trajectory tolerance 1.0 rad instead of the driver's 0.2 (reason below).
 #   - update_rate 100 Hz instead of 125 (reason at update_rate).
+#   - state_publish_rate 50 Hz instead of 100: only the controllers' state
+#     topics, not the control loop.
 #   - robotiq_gripper_controller runs here; on the robot it has its own
 #     controller_manager in namespace robotiq_gripper. gripper_action_relay.py
 #     serves the real action name.
@@ -48,7 +50,7 @@ controller_manager:
 
 speed_scaling_state_broadcaster:
   ros__parameters:
-    state_publish_rate: 100.0
+    state_publish_rate: 50.0
     tf_prefix: "ur10"
 
 io_and_status_controller:
@@ -82,7 +84,7 @@ joint_trajectory_controller:
     state_interfaces:
       - position
       - velocity
-    state_publish_rate: 100.0
+    state_publish_rate: 50.0
     action_monitor_rate: 20.0
     allow_partial_joints_goal: false
     # trajectory tolerance is 1.0 rad, not the upstream 0.2. At 0.2 every arm motion
@@ -118,7 +120,7 @@ scaled_joint_trajectory_controller:
     state_interfaces:
       - position
       - velocity
-    state_publish_rate: 100.0
+    state_publish_rate: 50.0
     action_monitor_rate: 20.0
     allow_partial_joints_goal: false
     constraints:

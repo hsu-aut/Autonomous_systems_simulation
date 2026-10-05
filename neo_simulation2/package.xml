@@ -35,14 +35,21 @@
   <exec_depend>joint_state_publisher</exec_depend>
   <exec_depend>joint_state_publisher_gui</exec_depend>
   <exec_depend>rviz2</exec_depend>
+  <!-- RViz plugins used by rviz/navigation.rviz and rviz/robot_description_rviz.rviz -->
+  <exec_depend>rviz_default_plugins</exec_depend>
+  <exec_depend>nav2_rviz_plugins</exec_depend>
   <exec_depend>teleop_twist_keyboard</exec_depend>
+  <!-- use_teleop:=True runs teleop_twist_keyboard in an xterm -->
+  <exec_depend>xterm</exec_depend>
   <!-- Gazebo plugins: lidar sensors (gazebo_plugins), object attachment (neo_link_attacher) -->
   <exec_depend>gazebo_plugins</exec_depend>
   <exec_depend>neo_link_attacher</exec_depend>
   <!-- Nav2 controller plugin named in configs/mpo_700/navigation.yaml -->
   <exec_depend>neo_local_planner2</exec_depend>
-  <!-- MoveIt, started by bringup.launch.py -->
+  <!-- MoveIt, started by bringup.launch.py with moveit:=True -->
   <exec_depend>neo_ur_moveit_config</exec_depend>
+  <!-- Objects (the cube), placed by bringup.launch.py with spawn_cube:=True -->
+  <exec_depend>neo_sim_objects</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

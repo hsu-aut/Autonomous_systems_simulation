@@ -1,7 +1,7 @@
 """Put the objects from config/objects.yaml into the running Gazebo simulation.
 
     ros2 launch neo_sim_objects spawn_objects.launch.py
-    ros2 launch neo_sim_objects spawn_objects.launch.py objects:=/path/to/my_objects.yaml
+    ros2 launch neo_sim_objects spawn_objects.launch.py objects:=my_objects.yaml
 """
 import os
 

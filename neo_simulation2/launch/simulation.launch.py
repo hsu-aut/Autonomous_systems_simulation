@@ -242,7 +242,7 @@ def generate_launch_description():
         'world',
         default_value='neo_workshop',
         description='Available worlds: "neo_workshop", "neo_track1", "neo_table" (one big table, no walls - '
-                    'launch with use_navigation:=False), or a full path to a .world file'
+                    'launch bringup.launch.py with navigation:=False), or a full path to a .world file'
     )
 
     declare_arm_type_cmd = DeclareLaunchArgument(
@@ -261,20 +261,20 @@ def generate_launch_description():
     )
 
     declare_use_teleop_cmd = DeclareLaunchArgument(
-        'use_teleop', default_value='False',
+        'teleop', default_value='False',
         description='Start teleop_twist_keyboard in an xterm. Off by default: the xterm '
                     'rarely gets keyboard focus; run it in your own terminal instead.'
     )
 
     declare_gui_cmd = DeclareLaunchArgument(
-        'gui', default_value='True',
-        description='Start the Gazebo GUI (gzclient). False runs the simulation headless.'
+        'gazebo_gui', default_value='True',
+        description='Start the Gazebo window (gzclient). False runs the simulation headless.'
     )
 
     declare_gui_delay_cmd = DeclareLaunchArgument(
-        'gui_delay', default_value='6.0',
-        description='Seconds after the server before the Gazebo GUI starts. Started together, '
-                    'the GUI can request the scene before the world is loaded and then shows '
+        'gazebo_gui_delay', default_value='6.0',
+        description='Seconds after the server before the Gazebo window starts. Started together, '
+                    'the window can request the scene before the world is loaded and then shows '
                     'a blank window forever.'
     )
 
@@ -283,9 +283,9 @@ def generate_launch_description():
     my_neo_env_arg = LaunchConfiguration('world')
     robot_arm_arg = LaunchConfiguration('arm_type')
     docking_adapter_arg = LaunchConfiguration('use_docking_adapter')
-    use_teleop_arg = LaunchConfiguration('use_teleop')
-    gui_arg = LaunchConfiguration('gui')
-    gui_delay_arg = LaunchConfiguration('gui_delay')
+    use_teleop_arg = LaunchConfiguration('teleop')
+    gui_arg = LaunchConfiguration('gazebo_gui')
+    gui_delay_arg = LaunchConfiguration('gazebo_gui_delay')
 
     ld.add_action(declare_my_robot_arg)
     ld.add_action(declare_world_name_arg)

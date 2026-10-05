@@ -15,7 +15,8 @@ enough - break it:
     a line starting "? "        silent truncation
     a line starting "---"       silent truncation
 
-This has bitten twice. Run it after editing any xacro that feeds a robot:
+This has bitten twice. Run it after editing any xacro that feeds a robot (in the workspace
+folder):
 
     python3 src/neo_simulation2/scripts/check_urdf_for_ros2_control.py
 

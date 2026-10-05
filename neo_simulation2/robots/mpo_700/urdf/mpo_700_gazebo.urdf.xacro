@@ -20,8 +20,13 @@
     <xacro:property name="lidar_samples" value="541" />
     <xacro:property name="lidar_1_update_rate" value="20" />
     <xacro:property name="lidar_2_update_rate" value="20" />
+    <!-- Base control loop stays at 100 Hz: the commanded velocity must be
+         re-applied often enough that wheel friction cannot slow the base between
+         updates. Odometry (odom topic and odom TF) is published at 50 Hz to
+         reduce message load; Nav2's controller runs at 50 Hz, so it still gets
+         one odometry update per control cycle. -->
     <xacro:property name="controller_update_rate" value="100" />
-    <xacro:property name="odom_update_rate" value="100" />
+    <xacro:property name="odom_update_rate" value="50" />
 
     <!--Object Controller-->
     <xacro:gazebo_object_controller 

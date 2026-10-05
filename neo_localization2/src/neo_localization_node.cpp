@@ -700,9 +700,11 @@ protected:
       // compose and publish transform for tf package
       geometry_msgs::msg::TransformStamped pose;
       // compose header
-      // Adding an expiry time of the frame. Same procedure followed in nav2_amcl
-      m_offset_time.nanosec = m_offset_time.nanosec + 1000000000;
-      pose.header.stamp = m_offset_time;
+      // Adding an expiry time of the frame. Same procedure followed in nav2_amcl.
+      // Computed with rclcpp time arithmetic on a copy: adding 1e9 to nanosec
+      // directly gave stamps with nanosec >= 1e9 (not a valid time), and changing
+      // m_offset_time also stamped the localization pose 1 s in the future.
+      pose.header.stamp = rclcpp::Time(m_offset_time) + rclcpp::Duration::from_seconds(1.0);
       pose.header.frame_id = m_map_frame;
       pose.child_frame_id = m_odom_frame;
       // compose data container

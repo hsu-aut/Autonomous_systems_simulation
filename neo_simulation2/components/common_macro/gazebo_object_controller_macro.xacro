@@ -24,17 +24,16 @@
                 <robotNamespace><remapping>/tf:=tf</remapping></robotNamespace>
                 <ros>    <remapping>/tf:=tf</remapping>    </ros>
     
-                <!-- Set odom publish rate -->
-                <odometryRate>${odom_update_rate}</odometryRate>
-    
                 <!-- Control loop rate, i.e. how often the commanded velocity is
                      re-applied (the real omnidrive runs at control_rate 100 Hz).
                      Without update_rate the plugin defaulted to 20 Hz, and wheel
                      friction between updates held the base at about two thirds
                      of the commanded speed. -->
                 <update_rate>${controller_update_rate}</update_rate>
-                <!-- Odometry and odom TF publish rate -->
-                <publish_rate>${controller_update_rate}</publish_rate>
+                <!-- Odometry and odom TF publish rate. Independent of the control
+                     loop, so it can be lowered without slowing the base. (The
+                     plugin has no odometryRate parameter; this is the one it reads.) -->
+                <publish_rate>${odom_update_rate}</publish_rate>
 
                 <!-- Stop when cmd_vel goes quiet for this long (s). 0 disables. -->
                 <cmd_timeout>${cmd_timeout}</cmd_timeout>
