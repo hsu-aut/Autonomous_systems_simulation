@@ -18,14 +18,21 @@
     <passive_joint name="left_inner_knuckle_joint"/>
     <passive_joint name="left_inner_finger_joint"/>
 
+    <!-- Inside the full range (0.0 to 0.7), so that the fingers do not collide:
+         open 0.07, close 0.63 (90 % open / 90 % closed) -->
     <group_state name="open" group="gripper">
-      <joint name="finger_joint" value="0.0" />
+      <joint name="finger_joint" value="0.07" />
     </group_state>
     <group_state name="close" group="gripper">
-      <joint name="finger_joint" value="0.7" />
+      <joint name="finger_joint" value="0.63" />
     </group_state>
 
     <end_effector name="endeffector" parent_link="${prefix_value}wrist_3_link" group="gripper"/>
+
+    <!-- No collision checking for the contact pads, neither with other robot links
+         nor with objects in the planning scene (cube, tables) -->
+    <disable_default_collisions link="left_inner_finger_pad"/>
+    <disable_default_collisions link="right_inner_finger_pad"/>
 
     <disable_collisions link1="left_inner_finger" link2="ur_to_robotiq_link" reason="Never"/>
     <disable_collisions link1="left_inner_finger_pad" link2="ur_to_robotiq_link" reason="Never"/>
