@@ -7,7 +7,7 @@ MPO-700. MoveIt plans collision-free arm motions and executes them through the a
 | --- | --- |
 | Origin | Neobotix; extended for this project (Pilz straight-line planner, corrections) |
 | Type | MoveIt configuration, launch file |
-| Started by | `bringup.launch.py`, 26 s after the simulation |
+| Started by | `bringup.launch.py` with `moveit:=True` (default `False`), 26 s after the simulation |
 
 > **Important:** Do not start MoveIt a second time. Two `move_group` instances answer the same requests,
 > and goals fail.
@@ -40,9 +40,11 @@ MPO-700. MoveIt plans collision-free arm motions and executes them through the a
 neo_mpo_moveit2/
 └── neo_ur_moveit_config/
     ├── launch/neo_ur_moveit.launch.py    starts move_group and the MoveIt RViz window
-    ├── srdf/mpo_700.srdf.xacro           planning groups (ur_manipulator, gripper), named poses,
-    │                                     allowed collisions between robot links
-    ├── srdf/robotiq_2f_140.xacro         gripper part of the SRDF
+    ├── srdf/mpo_700.srdf.xacro           planning groups (ur_manipulator, gripper), named poses
+    │                                     (including the pick-and-place stages of
+    │                                     Stage_values.md), allowed collisions between robot links
+    ├── srdf/robotiq_2f_140.xacro         gripper part of the SRDF: named states open (0.07) and
+    │                                     close (0.63), no collision checking for the contact pads
     └── config/
         ├── controllers.yaml              controllers that execute MoveIt trajectories
         ├── kinematics.yaml               IK solver (KDL)
@@ -53,7 +55,7 @@ neo_mpo_moveit2/
 
 ## Standalone start
 
-Start MoveIt separately only if `bringup.launch.py` was started with `use_moveit:=False`:
+Start MoveIt separately only if `bringup.launch.py` was started without `moveit:=True`:
 
 ```bash
 ros2 launch neo_ur_moveit_config neo_ur_moveit.launch.py \

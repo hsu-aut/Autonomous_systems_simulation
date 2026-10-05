@@ -119,10 +119,11 @@ support, so nothing indicated a source build was required.
 
 ### Fix
 
-Source-build it into the workspace so the overlay shadows the apt copy:
+Source-build it into the workspace so the overlay shadows the apt copy (commands run in the workspace
+folder):
 
 ```bash
-cd ~/ros2_ws/neobotix_workspace/src
+cd src
 git clone https://github.com/PickNikRobotics/ros2_robotiq_gripper.git
 
 # only robotiq_description is needed; the others pull in serial-port deps and fail to build
@@ -505,7 +506,7 @@ which also still works.
 | Message | Cause |
 |---|---|
 | `Parameter 'hold_joints' has already been declared` | `gazebo_ros2_control` declares it once per `<ros2_control>` block; there are now two. Logged as ERROR but non-fatal — hardware activates fine immediately after. |
-| `Missing model.config for /home/<user>/...` (~55 lines) | Stale paths in `~/.gazebo/gui.ini` `[model_paths]`, added via the GUI's *Insert → Add Path*. Purely the Insert panel. Remove with `sed -i '/^filenames=/d' ~/.gazebo/gui.ini`. |
+| `Missing model.config for /home/<user>/...` (~55 lines) | Stale paths in `.gazebo/gui.ini` (in the home folder) `[model_paths]`, added via the GUI's *Insert → Add Path*. Purely the Insert panel. Remove with `cd && sed -i '/^filenames=/d' .gazebo/gui.ini`. |
 | `Missing model.config for .../share/../ament_index`, `colcon-core` (6 lines) | Side effect of the `gazebo_model_path="${prefix}/.."` exports. **Required** — removing them breaks mesh resolution. |
 | `xterm ... exit code 2` on Ctrl-C | `teleop_twist_keyboard` exits non-zero on SIGINT and xterm propagates it. Teleop works normally during the run. |
 | `gzclient: Assertion 'px != 0' failed` | Known Gazebo Classic crash on shutdown. |
@@ -523,8 +524,8 @@ sudo apt update && sudo apt install -y \
   ros-humble-robotiq-description \
   ros-humble-gazebo-ros2-control
 
-# 2. correct robotiq_description from source
-cd ~/ros2_ws/neobotix_workspace/src
+# 2. correct robotiq_description from source (starting in the workspace folder)
+cd src
 git clone https://github.com/PickNikRobotics/ros2_robotiq_gripper.git
 touch ros2_robotiq_gripper/{robotiq_driver,robotiq_controllers,robotiq_hardware_tests}/COLCON_IGNORE
 
@@ -533,8 +534,8 @@ touch ros2_robotiq_gripper/{robotiq_driver,robotiq_controllers,robotiq_hardware_
 
 # 4. apply the neo_simulation2 changes  (see Complete list of changes)
 
-# 5. build
-cd ~/ros2_ws/neobotix_workspace
+# 5. build (back in the workspace folder)
+cd ..
 colcon build --symlink-install --allow-overriding robotiq_description
 
 # 6. run
@@ -548,10 +549,10 @@ ros2 launch neo_simulation2 simulation.launch.py \
 
 ```bash
 xacro src/neo_simulation2/robots/mpo_700/mpo_700.urdf.xacro \
-      use_gazebo:=true arm_type:=ur10 use_docking_adapter:=False > /tmp/check.urdf
+      use_gazebo:=true arm_type:=ur10 use_docking_adapter:=False > check.urdf
 
 # should print gazebo_ros2_control/GazeboSystem ONLY — no gz_ros2_control
-grep -oP '(?<=<plugin>)[^<]+' /tmp/check.urdf | sort -u
+grep -oP '(?<=<plugin>)[^<]+' check.urdf | sort -u
 ```
 
 ---

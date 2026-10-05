@@ -7,7 +7,7 @@ simulation, or returns them to their start position.
 | --- | --- |
 | Origin | This project |
 | Type | ROS 2 node (Python), launch file, configuration |
-| Started by | Manual start (see [Usage](#usage)), or the launch file of an application |
+| Started by | `neo_simulation2/launch/bringup.launch.py` (option `spawn_cube`, default `True`), manual start (see [Usage](#usage)), or the launch file of an application |
 | Configuration | `config/objects.yaml` |
 
 ## Data flow
@@ -50,8 +50,8 @@ Each entry in `objects.yaml` requires:
 # Place the objects defined in config/objects.yaml
 ros2 launch neo_sim_objects spawn_objects.launch.py
 
-# Place the objects defined in a custom file
-ros2 launch neo_sim_objects spawn_objects.launch.py objects:=/full/path/to/my_objects.yaml
+# Place the objects defined in a custom file (path relative to the current folder)
+ros2 launch neo_sim_objects spawn_objects.launch.py objects:=my_objects.yaml
 ```
 
 To place a single object from the command line:

@@ -55,7 +55,7 @@ ros2_robotiq_gripper/
 ## Local changes
 
 - `robotiq_description`: the lower limit of `finger_joint` is −0.01 rad, because Gazebo settles slightly
-  below 0. The meshes are resolvable by Gazebo. The [build command](../README.md#24-build-the-workspace)
+  below 0. The meshes are resolvable by Gazebo. The [build command](../Installation.md#5-build-the-workspace)
   therefore contains `--allow-overriding robotiq_description`.
 - `robotiq_driver` and `robotiq_controllers` are pinned to an older revision that builds on Humble. See
   [HUMBLE_PIN.md](HUMBLE_PIN.md).

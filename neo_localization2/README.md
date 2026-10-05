@@ -42,5 +42,12 @@ neo_localization2/
 
 - On shutdown, the node stops its background thread before it exits. Previously it aborted with exit
   code −6.
+- The `map → odom` transform is stamped 1 s after the odometry it is based on, so that it stays valid
+  until the next update (as in Nav2 AMCL). The 1 s was added directly to the nanoseconds field, which
+  produced invalid time stamps (nanoseconds ≥ 10⁹) and also moved the stamp of `/amcl_pose` 1 s into
+  the future. Both are corrected: the transform uses valid time arithmetic, `/amcl_pose` carries the
+  time of the odometry.
+- In the simulation the node runs on simulation time (`use_sim_time: True` in
+  `neo_simulation2/configs/*/navigation.yaml`).
 
 Neobotix documentation: <https://neobotix-docs.de/ros/packages/neo_localization.html>

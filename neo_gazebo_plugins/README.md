@@ -24,7 +24,10 @@ according to velocity commands.
 
 - The physical MPO-700 steers four wheels. In simulation, the plugin moves the complete base at the
   commanded velocity.
-- The plugin applies the latest command at 100 Hz.
+- The plugin applies the latest command at 100 Hz (`update_rate`) and publishes `/odom` and the TF
+  `odom → base_link` at 50 Hz (`publish_rate`). Both are set in
+  `neo_simulation2/components/common_macro/gazebo_object_controller_macro.xacro`, from the values in
+  the robot's `*_gazebo.urdf.xacro`.
 - The base stops when no command arrives for 0.2 s (`cmd_timeout`).
 - The plugin sets only the forward, lateral and rotational velocity. Gravity keeps the base on its
   wheels.

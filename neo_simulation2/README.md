@@ -1,7 +1,8 @@
 # neo_simulation2
 
 This package provides the Gazebo simulation of the MPO-700: world files, robot description, controller
-configuration, helper nodes, and `bringup.launch.py`, which starts the complete system.
+configuration, helper nodes, and `bringup.launch.py`, which starts the simulation with navigation and,
+with `moveit:=True`, MoveIt.
 
 | Property | Value |
 | --- | --- |
@@ -30,13 +31,15 @@ simulated robot to be running.
 ```text
   0 s ─┬─ simulation.launch.py   Gazebo, robot, controllers, helper nodes
        │
+ 10 s ─┼─ cube                   neo_sim_objects; only with spawn_cube:=True (default)
+       │
  20 s ─┼─ navigation.launch.py   map, localisation, Nav2
        │
- 26 s ─┼─ MoveIt                 move_group and the MoveIt window
+ 26 s ─┼─ MoveIt                 move_group and the MoveIt window; only with moveit:=True
        │
- 32 s ─┼─ navigation window      only with use_nav_rviz:=True
+ 32 s ─┼─ navigation window      only with navigation_rviz:=True
        │
- 36 s ─┴─ monitor window         neo_robot_monitor
+ 36 s ─┴─ monitor window         only with monitor:=True
 ```
 
 ## Data flow
@@ -106,7 +109,7 @@ and MoveIt use. `bringup.launch.py` starts them.
 | --- | --- |
 | `sim_scan_filter.py` | Limits each lidar scan to ±130° (`lidar_N/scan` → `lidar_N/scan_filtered`) and merges both lidars into `/scan` |
 | `gripper_action_relay.py` | Provides the gripper action under the name used by MoveIt, and forwards each goal to the gripper controller |
-| `stop_sim.sh` | Not a node. Stops the simulation cleanly: `ros2 run neo_simulation2 stop_sim.sh` |
+| `stop_sim.sh` | Not a node. Stops every simulation launch with all of its nodes, and nodes left behind by an earlier launch: `ros2 run neo_simulation2 stop_sim.sh`. Nodes that ignore Ctrl-C are stopped with SIGTERM or SIGKILL. See [README, Stop the simulation](../README.md#17-stop-the-simulation). |
 | `check_urdf_for_ros2_control.py` | Not a node. Run it after editing the robot description: it reports text that prevents the controllers from starting. |
 
 ## Robot description
@@ -130,7 +133,7 @@ Controllers (`configs/ur_config/ur10/ur_controllers.yaml`):
 | World (`world:=`) | Content | Map (`map:=`) |
 | --- | --- | --- |
 | `neo_workshop` (default) | Workshop with two tables | `neo_workshop` |
-| `neo_table` | One table with a cube; robot parked in front of it | None; set `use_navigation:=False` |
+| `neo_table` | One table with a cube; robot parked in front of it | None; set `navigation:=False` |
 | `neo_track1`, `neo_track2` | Driving tracks | `neo_track1`, `neo_track2` |
 
 `neo_workshop` and `neo_table` load two Gazebo world plugins: `gazebo_ros_state` (positions of all
@@ -140,7 +143,7 @@ objects) and `neo_link_attacher` (carrying the cube).
 
 General usage:
 
-- Run all commands in a prepared terminal (see [main README, step 3.1](../README.md#31-prepare-each-terminal)).
+- Every new terminal is ready once `.bashrc` contains the lines from [Installation.md, steps 6 and 7](../Installation.md#6-set-up-the-terminal).
 - Pass options as `<name>:=<value>` after the file name. Separate multiple options with spaces.
 - To list all options of a launch file, append `--show-args`.
 
@@ -166,48 +169,9 @@ Launch files of other packages:
 ros2 launch neo_simulation2 bringup.launch.py
 ```
 
-The components start in the order shown in [Start-up sequence](#start-up-sequence). Wait until the
-terminal prints `You can start planning now!` before sending goals to MoveIt.
+The components start in the order shown in [Start-up sequence](#start-up-sequence).
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `world` | `neo_workshop` | World: `neo_workshop`, `neo_table` (one table with a cube), `neo_track1`, `neo_track2`, or the full path of a `.world` file |
-| `map` | `neo_workshop` | Navigation map: `neo_workshop`, `neo_track1`, `neo_track2`, or the full path of a `.yaml` file. Set it together with `world`. |
-| `use_navigation` | `True` | Start navigation |
-| `use_moveit` | `True` | Start MoveIt |
-| `arm_type` | `ur10` | Arm type. `none` removes the arm; then also set `use_moveit:=False`. |
-| `gui` | `True` | Open the Gazebo window |
-| `use_moveit_rviz` | `True` | Open the MoveIt RViz window. `False` reduces the CPU load considerably. |
-| `use_nav_rviz` | `False` | Open the navigation RViz window |
-| `use_monitor` | `True` | Open the monitor window |
-| `tcp_frame` | `ur10tool0` | Gripper frame shown in the monitor; `grasp_tcp` is the point between the fingers |
-| `use_amcl` | `False` | Use Nav2 AMCL instead of `neo_localization2` for localisation |
-| `nav_delay`, `moveit_delay`, `rviz_delay`, `monitor_delay` | `20`, `26`, `32`, `36` | Start delays in seconds; increase them on a slow computer |
-| `use_teleop` | `False` | Open a keyboard teleoperation window |
-
-> **Note:** `--show-args` lists approximately 30 options. Options not listed above are forwarded to the
-> included launch files; keep their default values.
-
-> **Note:** The project is configured and tested for `my_robot:=mpo_700` with `arm_type:=ur10` (the
-> defaults). With `arm_type:=ur5`, `ur5e` or `ur10e`, the arm and gripper controllers start; MoveIt and
-> navigation are tested with `ur10` only. The other robot types originate from Neobotix and are not
-> configured for this project.
-
-Examples:
-
-```bash
-# Show the navigation map; do not open the MoveIt window
-ros2 launch neo_simulation2 bringup.launch.py use_nav_rviz:=True use_moveit_rviz:=False
-
-# Run without any window
-ros2 launch neo_simulation2 bringup.launch.py gui:=False use_moveit_rviz:=False use_monitor:=False
-
-# Test grasping at a single table, without navigation
-ros2 launch neo_simulation2 bringup.launch.py world:=neo_table use_navigation:=False
-
-# Navigation only, on a driving track, without arm and MoveIt
-ros2 launch neo_simulation2 bringup.launch.py world:=neo_track1 map:=neo_track1 arm_type:=none use_moveit:=False
-```
+All arguments, common combinations and examples: [Launch_arguments.md](../Launch_arguments.md).
 
 ### simulation.launch.py
 
@@ -216,7 +180,7 @@ ros2 launch neo_simulation2 simulation.launch.py
 ```
 
 - Starts Gazebo, the robot and its controllers, without navigation and MoveIt.
-- Options: `world`, `arm_type`, `gui` (as for `bringup.launch.py`).
+- Options: `world`, `arm_type`, `gazebo_gui` (as for `bringup.launch.py`).
 
 To drive the robot with the keyboard, run in a second terminal:
 
@@ -255,7 +219,7 @@ ros2 launch neo_simulation2 navigation.launch.py map:=neo_workshop
    ros2 run teleop_twist_keyboard teleop_twist_keyboard
    ```
 
-4. Save the map (terminal 4):
+4. Save the map (terminal 4, in the workspace folder):
 
    ```bash
    ros2 run nav2_map_server map_saver_cli -f src/neo_simulation2/maps/<name>
@@ -280,8 +244,9 @@ The simulation uses the names and settings of the physical MPO-700, so that it b
 physical robot. This section describes the origin of the settings and the remaining differences. It is
 background information; it is not required to use the simulation.
 
-The software of the physical robot is located in `src/mpo_700_workspace` (on the robot PC:
-`~/mpo_700_workspace`). This folder is not part of the simulation. Do not edit or build it.
+The software of the physical robot is in the folder `mpo_700_workspace`. It is not part of this
+repository; if present, it is placed in `src/mpo_700_workspace` (excluded by `.gitignore`; on the
+robot PC it is the folder `mpo_700_workspace` in the home folder). This folder is not part of the simulation. Do not edit or build it.
 
 ### Identical settings
 
@@ -317,7 +282,8 @@ Use of the lidar topics:
 | Lidar limiting and merging | `sim_scan_filter.py` | `neo_scan_filter_node` and `topic_tools relay` | The packages of the physical robot are not part of this workspace |
 | MoveIt planners | OMPL and Pilz | OMPL | Pilz provides straight-line motions for grasping |
 | Grasp frames | `grasp_tcp`, `grasp_tip`, `gripper_tcp` | `gripper_tcp` | Exact finger centre and fingertip for grasp planning |
-| Clock | Simulation time (see [known issues](../README.md#8-known-issues)) | System clock | Gazebo provides the clock |
+| Clock | Simulation time | System clock | Gazebo provides the clock |
+| Odometry rate (`/odom`, TF `odom → base_link`) | 50 Hz; velocity commands applied at 100 Hz | Driver setting | Reduced message load; Nav2 sends velocity commands at 50 Hz |
 
 ### Source of the settings
 
@@ -336,7 +302,7 @@ physical robot. If the value cannot work in Gazebo, add a row to [Differences](#
 
 > **Important:** Do not add a `COLCON_IGNORE` file to `src/mpo_700_workspace`. That file also prevents
 > the workspace from building when it is copied to the robot PC. Exclude it with the
-> [build command](../README.md#24-build-the-workspace) instead.
+> [build command](../Installation.md#5-build-the-workspace) instead.
 
 ## Gazebo Classic
 

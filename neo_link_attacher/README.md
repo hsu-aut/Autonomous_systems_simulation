@@ -45,11 +45,41 @@ neo_link_attacher/
 
 ## Manual use
 
-To release the cube, run:
+Prerequisite: the simulation is running (`bringup.launch.py`), and the cube is in the world.
 
-```bash
-ros2 service call /link_attacher/detach neo_link_attacher/srv/Attach \
-  "{model1: mpo_700, link1: ur10wrist_3_link, model2: cube, link2: link}"
-```
+1. Attach the cube to the robot wrist:
+
+   ```bash
+   ros2 service call /link_attacher/attach neo_link_attacher/srv/Attach \
+     "{model1: mpo_700, link1: ur10wrist_3_link, model2: cube, link2: link}"
+   ```
+
+   Expected response: `ok=True, message='attached mpo_700/ur10wrist_3_link<->cube/link'`. The cube now
+   moves with the arm.
+
+2. Release the cube:
+
+   ```bash
+   ros2 service call /link_attacher/detach neo_link_attacher/srv/Attach \
+     "{model1: mpo_700, link1: ur10wrist_3_link, model2: cube, link2: link}"
+   ```
+
+   Expected response: `ok=True`. Gravity and contacts act on the cube again.
+
+| Request field | Value | Meaning |
+| --- | --- | --- |
+| `model1` | `mpo_700` | Gazebo model name of the robot |
+| `link1` | `ur10wrist_3_link` | Robot link that holds the object (the gripper is part of this link in Gazebo) |
+| `model2` | `cube` | Gazebo model name of the object |
+| `link2` | `link` | Link of the object |
+
+> **Note:**
+>
+> - `attach` fixes the object at its current position relative to the wrist, also when the gripper is
+>   far away. Close the gripper around the object first.
+> - `detach` removes only a joint created by `attach`. Without a previous `attach`, the response is
+>   `ok=False, message='not attached: ...'` and nothing changes.
+> - Neither service moves the gripper fingers. To open or close the gripper, send a goal to the
+>   gripper action `/robotiq_gripper/robotiq_gripper_controller/gripper_cmd`.
 
 After modifying the C++ source, rebuild the workspace and restart the simulation.

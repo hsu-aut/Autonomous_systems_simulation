@@ -1,183 +1,238 @@
 # Neobotix MPO-700 Simulation in Gazebo
 
-This repository contains a ROS 2 Humble simulation of the Neobotix MPO-700 mobile manipulator in Gazebo
-Classic 11. The simulated robot carries a UR10 arm and a Robotiq 2F-140 gripper. No physical robot is
-required.
+This repository contains a simulation of the Neobotix MPO-700, a mobile robot with an arm. The robot
+can drive in any direction, also sideways, and carries a UR10 arm with a Robotiq 2F-140 gripper. The
+simulation runs with ROS 2 Humble in Gazebo Classic 11 on your own computer; no physical robot is
+needed.
 
-The simulation provides:
+With the simulation you can:
 
-- autonomous navigation with Nav2
-- collision-free arm motion planning with MoveIt 2
-- Gazebo services that place objects in the world and attach them to the gripper
+- drive the robot with the keyboard,
+- let the robot drive to a goal on its own (navigation with Nav2),
+- plan and execute collision-free arm and gripper motions (MoveIt 2),
+- write your own program that picks up a cube and places it on another table: the simulation places
+  objects in the world and attaches them to the gripper on request.
 
-The ROS 2 terms used in this documentation are defined in [Terminology](#9-terminology).
+## Quick start
+
+1. Install the simulation once: [Installation.md](Installation.md).
+2. Start the simulation, for example with all components:
+   `ros2 launch neo_simulation2 bringup.launch.py moveit:=True`
+   (the other start options are in [section 1.2](#12-start-the-simulation)).
+3. Stop the simulation: `ros2 run neo_simulation2 stop_sim.sh`
+
+## Where to find what
+
+| You want to ... | Read |
+| --- | --- |
+| install the simulation | [Installation.md](Installation.md) |
+| start, use and stop the simulation | [Running the simulation](#1-running-the-simulation), below |
+| choose what starts (world, windows, components) and learn how to use each start option | [Launch_arguments.md](Launch_arguments.md) |
+| solve an error | [Troubleshooting.md](Troubleshooting.md) |
+| look up a ROS 2 term or command | [Terminology.md](Terminology.md) |
+| program the pick-and-place mission | [Stage_values.md](Stage_values.md) |
+| understand or change a package | its `README.md`, see [Packages](#2-packages) |
+| look up launch files, worlds, the start-up sequence or the differences to the physical robot | [neo_simulation2/README.md](neo_simulation2/README.md) |
+| read how the gripper was integrated (background) | [ros2_robotiq_gripper/GRIPPER_INTEGRATION.md](ros2_robotiq_gripper/GRIPPER_INTEGRATION.md) |
 
 ## Contents
 
-1. [Requirements](#1-requirements)
-2. [Installation](#2-installation)
-3. [Running the simulation](#3-running-the-simulation)
-4. [Launch options](#4-launch-options)
-5. [Packages](#5-packages)
-6. [System overview](#6-system-overview)
-7. [Troubleshooting](#7-troubleshooting)
-8. [Known issues](#8-known-issues)
-9. [Terminology](#9-terminology)
-10. [Further documentation](#10-further-documentation)
+1. [Running the simulation](#1-running-the-simulation)
+2. [Packages](#2-packages)
+3. [System overview](#3-system-overview)
 
 ---
 
-## 1. Requirements
+## 1. Running the simulation
 
-| Item | Requirement |
+Run all commands in the workspace folder `neobotix_workspace` (see
+[Installation.md](Installation.md#4-create-the-workspace-and-clone-the-repository)).
+
+### 1.1 Prepare a terminal
+
+After the installation, every new terminal is ready to use. To check a terminal, run:
+
+```bash
+echo $RMW_IMPLEMENTATION $ROS_DOMAIN_ID    # prints: rmw_cyclonedds_cpp 73
+```
+
+If it prints nothing, the terminal was opened before the installation was finished
+([installation steps 6 and 7](Installation.md#6-set-up-the-terminal)): run
+`source ~/.bashrc`, or open a new terminal.
+
+### 1.2 Start the simulation
+
+There are four start options. Choose the one that fits what you want to do:
+
+| Option | Use it to ... | Windows that open |
+| --- | --- | --- |
+| 1. Gazebo only | drive the robot yourself with the keyboard | Gazebo, keyboard window |
+| 2. Gazebo + Navigation | let the robot drive to goals on its own | Gazebo, navigation RViz |
+| 3. Gazebo + MoveIt | move the arm and the gripper | Gazebo, MoveIt RViz |
+| 4. Gazebo + Navigation + MoveIt | do both, for example the pick-and-place mission | Gazebo, MoveIt RViz |
+
+Gazebo shows the simulated world with the robot. RViz shows what the robot knows (map, laser scans,
+planned paths and arm motions), and you give it goals there.
+
+In a terminal, run the command of your option:
+
+```bash
+# 1. Gazebo only, driving with the keyboard
+ros2 launch neo_simulation2 bringup.launch.py navigation:=False teleop:=True
+
+# 2. Gazebo + Navigation
+ros2 launch neo_simulation2 bringup.launch.py navigation_rviz:=True
+
+# 3. Gazebo + MoveIt (arm and gripper)
+ros2 launch neo_simulation2 bringup.launch.py navigation:=False moveit:=True
+
+# 4. Gazebo + Navigation + MoveIt
+ros2 launch neo_simulation2 bringup.launch.py moveit:=True
+```
+
+The components start one after the other: the Gazebo window after about 6 s, navigation after 20 s,
+MoveIt after 26 s. The start is complete after about 40 s; wait until then before you send goals. The
+exact order is shown in the [start-up sequence](neo_simulation2/README.md#start-up-sequence).
+
+How to drive with the keyboard, send navigation goals and move the arm in each option is described in
+[Launch_arguments.md](Launch_arguments.md#2-start-options).
+
+**Choosing a world.** The robot starts in `neo_workshop`. For another world, add `world:=<name>` to the
+command; with navigation (options 2 and 4), also add `map:=<name>`, so that navigation uses the map
+of that world.
+
+| World | Content | Map |
+| --- | --- | --- |
+| `neo_workshop` (default) | Workshop with two tables; the cube is placed on the first table | `neo_workshop` (default) |
+| `neo_table` | One table with a cube; the robot is parked in front of it | None; use option 1 or 3 |
+| `neo_track1` | Driving track with barriers | `neo_track1` |
+
+For example, option 2 on the driving track:
+
+```bash
+ros2 launch neo_simulation2 bringup.launch.py navigation_rviz:=True world:=neo_track1 map:=neo_track1
+```
+
+### 1.3 Drive with the keyboard
+
+Without navigation (options 1 and 3), you can drive the robot yourself. In a second terminal, run:
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+Option 1 already starts it for you (`teleop:=True`), in a separate window. Keep the terminal or window
+with `teleop_twist_keyboard` active, and hold a key down; the robot stops 0.2 s after the last key
+press.
+
+| Key | Motion |
 | --- | --- |
-| Operating system | Ubuntu 22.04 |
-| ROS 2 | Humble, desktop installation |
-| Simulator | Gazebo Classic 11 (installed in step 2.2) |
-| Network | Internet access on the first start: Gazebo downloads several models |
+| `i` / `,` | Forward / backward |
+| `j` / `l` | Turn left / right |
+| `J` / `L` (with Shift) | Move sideways to the left / right |
+| `k` | Stop |
+| `q` / `z` | Increase / decrease the speed by 10 % |
 
----
+> **Note:** Do not drive with the keyboard while navigation is running (options 2 and 4): Nav2 sends
+> its own drive commands, and the two would conflict.
 
-## 2. Installation
+### 1.4 Drive to the pick-up, drop and home positions
 
-### 2.1 Install ROS 2 Humble
-
-Install ROS 2 Humble as described in the
-[official installation guide](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html).
-Install the desktop variant and the development tools:
-
-```bash
-sudo apt install ros-humble-desktop ros-dev-tools
-```
-
-### 2.2 Install the dependencies
+With navigation running in `neo_workshop` (option 2 or 4), you can send the robot to the positions of
+the pick-and-place mission ([Stage_values.md](Stage_values.md#2-robot-positions)). Run one of these
+commands in a second terminal:
 
 ```bash
-sudo apt install ros-humble-gazebo-ros-pkgs ros-humble-gazebo-ros2-control \
-  ros-humble-ros2-control ros-humble-ros2-controllers \
-  ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-slam-toolbox \
-  ros-humble-moveit ros-humble-ur-description \
-  ros-humble-xacro ros-humble-joint-state-publisher-gui ros-humble-teleop-twist-keyboard
+# Pick-up position, in front of the pick table (x -1.51 m, y -3.58 m, yaw -90°)
+ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
+  "{pose: {header: {frame_id: map}, pose: {position: {x: -1.51, y: -3.58}, orientation: {z: -0.7071, w: 0.7071}}}}"
+
+# Drop position, in front of the place table (x -4.65 m, y -3.56 m, yaw -90°)
+ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
+  "{pose: {header: {frame_id: map}, pose: {position: {x: -4.65, y: -3.56}, orientation: {z: -0.7071, w: 0.7071}}}}"
+
+# Home, the start position (x -0.02 m, y 0.00 m, yaw 0°)
+ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
+  "{pose: {header: {frame_id: map}, pose: {position: {x: -0.02, y: 0.0}, orientation: {z: 0.0, w: 1.0}}}}"
 ```
 
-### 2.3 Create the workspace and clone the repository
+The command ends when the robot has reached the goal; Ctrl-C cancels the goal. How to send the robot
+to other positions is described in
+[neo_nav2_bringup/README.md](neo_nav2_bringup/README.md#from-a-terminal).
+
+### 1.5 Open and close the gripper
+
+In a second terminal:
 
 ```bash
-mkdir -p ~/ros2_ws/neobotix_workspace
-cd ~/ros2_ws/neobotix_workspace
-git clone https://github.com/hsu-aut/Autonomous_systems_simulation.git src
+# Open
+ros2 action send_goal /robotiq_gripper/robotiq_gripper_controller/gripper_cmd \
+  control_msgs/action/GripperCommand "{command: {position: 0.07, max_effort: 60.0}}"
+
+# Close
+ros2 action send_goal /robotiq_gripper/robotiq_gripper_controller/gripper_cmd \
+  control_msgs/action/GripperCommand "{command: {position: 0.63, max_effort: 60.0}}"
 ```
 
-### 2.4 Build the workspace
+### 1.6 Attach and detach the cube
+
+In Gazebo, the gripper fingers alone cannot hold the cube reliably. To carry it, close the gripper
+around the cube and then attach the cube to the gripper. To put it down, detach it and then open the
+gripper. This works in `neo_workshop` and `neo_table`.
 
 ```bash
-cd ~/ros2_ws/neobotix_workspace
-source /opt/ros/humble/setup.bash
-colcon build --symlink-install --allow-overriding robotiq_description \
-  --base-paths $(ls -d src/*/ | grep -v mpo_700_workspace)
+# Attach the cube to the gripper
+ros2 service call /link_attacher/attach neo_link_attacher/srv/Attach \
+  "{model1: mpo_700, link1: ur10wrist_3_link, model2: cube, link2: link}"
+
+# Detach the cube
+ros2 service call /link_attacher/detach neo_link_attacher/srv/Attach \
+  "{model1: mpo_700, link1: ur10wrist_3_link, model2: cube, link2: link}"
 ```
 
-The build is complete when the output ends with `Summary: <n> packages finished`. Compiler warnings do
-not indicate a failure.
+- Both commands answer `ok=True` when they have worked.
+- `attach` fixes the cube at its current position relative to the gripper, even when the gripper is
+  far away from it. Close the gripper around the cube first.
+- More details: [neo_link_attacher/README.md](neo_link_attacher/README.md).
 
-> **Important:** Always build with this command. The `--base-paths` option excludes
-> `src/mpo_700_workspace`, which must not be built in this workspace.
+### 1.7 Stop the simulation
 
-### 2.5 When to rebuild
-
-| Change | Rebuild required |
-| --- | --- |
-| C++ source files (`.cpp`, `.hpp`) | Yes |
-| Files added or deleted | Yes |
-| Existing Python, YAML, launch or xacro files | No. `--symlink-install` links these files from `src/`. |
-
----
-
-## 3. Running the simulation
-
-### 3.1 Prepare each terminal
-
-Run the following commands in every new terminal:
-
-```bash
-cd ~/ros2_ws/neobotix_workspace
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-```
-
-### 3.2 Start the simulation
-
-In terminal 1, run:
-
-```bash
-ros2 launch neo_simulation2 bringup.launch.py
-```
-
-The launch file starts Gazebo, navigation, MoveIt and the monitor window in sequence. This takes
-approximately 40 s. Wait until the terminal prints:
-
-```text
-You can start planning now!
-```
-
-### 3.3 Stop the simulation
-
-In a prepared terminal (step 3.1), run:
+In any terminal, run:
 
 ```bash
 ros2 run neo_simulation2 stop_sim.sh
 ```
 
-> **Note:** Do not rely on Ctrl-C alone to stop the simulation. Ctrl-C can leave the Gazebo server
-> running, and the next start then fails.
+The command stops the simulation with all of its programs (nodes), including programs left over from
+an earlier start that was not stopped properly. It first stops the simulation the same way as Ctrl-C.
+Programs that are still running after 25 s are stopped by force (signals SIGINT, SIGTERM and finally
+SIGKILL), and each of them is listed with the signal that stopped it.
 
-> **Note:** If the command reports `port 11345 still held (TIME_WAIT)` and
-> `Process exited with failure 1`, all processes are stopped. Wait approximately 30 s before the next
-> start.
+> **Note:** Do not stop the simulation with Ctrl-C alone. Ctrl-C can leave the Gazebo server or Nav2
+> programs running in the background. The next start then fails, or runs every Nav2 program twice.
 
-For error messages and their solutions, see [Troubleshooting](#7-troubleshooting).
+The last line of the output tells you whether you can start again:
 
----
-
-## 4. Launch options
-
-Pass options to a launch file as `<name>:=<value>` after the file name:
-
-```bash
-ros2 launch neo_simulation2 bringup.launch.py use_nav_rviz:=True use_moveit_rviz:=False
-```
-
-- Separate multiple options with spaces.
-- Boolean options take the values `True` and `False`.
-- To list all options of a launch file, append `--show-args`:
-
-  ```bash
-  ros2 launch neo_simulation2 bringup.launch.py --show-args
-  ```
-
-### 4.1 bringup.launch.py
-
-| Purpose | Options |
+| Last line | Meaning |
 | --- | --- |
-| Show the navigation map in RViz | `use_nav_rviz:=True` |
-| Reduce the CPU load (no MoveIt window) | `use_moveit_rviz:=False` |
-| Run without any window | `gui:=False use_moveit_rviz:=False use_monitor:=False` |
-| Test grasping at a single table, without navigation | `world:=neo_table use_navigation:=False` |
-| Navigation only, without arm | `arm_type:=none use_moveit:=False` |
-| Slow computer: start navigation and MoveIt later | `nav_delay:=30 moveit_delay:=40` |
+| `port 11345 free - safe to relaunch` | Everything is stopped. You can start again. |
+| `port 11345 still held (TIME_WAIT)`, `Process exited with failure 1` | Everything is stopped. Wait about 30 s before the next start. |
+| `STILL RUNNING`, `Process exited with failure 2` | Some programs could not be stopped. Run the command again; if they are still listed, restart the computer. |
 
-The reference of all launch files and options is in [neo_simulation2/README.md](neo_simulation2/README.md#launch-files).
+For error messages and their solutions, see [Troubleshooting.md](Troubleshooting.md).
 
 ---
 
-## 5. Packages
+## 2. Packages
 
-Each package contains a `README.md` that describes its function, data flow, files and usage.
+The repository consists of ROS 2 packages, one folder each in `src/`. You do not need to know them to
+run the simulation; read a package's `README.md` (function, data flow, files, usage) when you want to
+understand or change it.
 
 | Package | Function | Origin |
 | --- | --- | --- |
 | **Simulation** | | |
-| [neo_simulation2](neo_simulation2/README.md) | Gazebo world, robot description, `bringup.launch.py` | Neobotix, extended |
+| [neo_simulation2](neo_simulation2/README.md) | Gazebo worlds, robot description, `bringup.launch.py` | Neobotix, extended |
 | [neo_gazebo_plugins](neo_gazebo_plugins/README.md) | Moves the robot base in Gazebo | This project |
 | [neo_link_attacher](neo_link_attacher/README.md) | Attaches carried objects to the gripper in Gazebo | This project |
 | [neo_sim_objects](neo_sim_objects/README.md) | Places the cube and other objects in Gazebo | This project |
@@ -198,11 +253,15 @@ Other items in `src/`:
 
 | Item | Description |
 | --- | --- |
-| `mpo_700_workspace/` | Software of the physical robot. **Not part of the simulation.** It is the reference for the simulation settings. Do not build it. |
+| `mpo_700_workspace/` | Software of the physical robot. **Not part of this repository and not part of the simulation.** If present, it is placed in `src/mpo_700_workspace/` (excluded by `.gitignore`) and serves as the reference for the simulation settings. Do not build it. |
 
 ---
 
-## 6. System overview
+## 3. System overview
+
+The diagram shows how the parts work together. Your own program (the application node) sends goals
+to Nav2 and MoveIt, which then command the robot in Gazebo. Arrows show the direction of the messages;
+names starting with `/` are the ROS 2 topics, actions and services used.
 
 ```text
     ┌────────────────────────────────────────────────────────────────────────┐
@@ -223,7 +282,7 @@ Other items in `src/`:
 ┌──────▼───────────┴─────────────────▼──────────────┴─────────────────▼────────┐
 │ Gazebo + simulated robot  (neo_simulation2)                                  │
 │ base: neo_planar_move    arm, gripper: ros2_control    2 lidars              │
-│ world plugins: neo_link_attacher, gazebo_ros_state                           │
+│ world plugins (neo_workshop, neo_table): neo_link_attacher, gazebo_ros_state │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 Also:  neo_sim_objects    ──▶ Gazebo   /spawn_entity: places objects, for example a cube
@@ -237,87 +296,5 @@ Also:  neo_sim_objects    ──▶ Gazebo   /spawn_entity: places objects, for 
 | MoveIt | Plans collision-free arm motions and sends them to the arm controller. |
 | Application node | Not part of this repository. Uses the interfaces shown above: drive goals (Nav2), arm motions (MoveIt), object positions and attachment (Gazebo services). |
 
----
-
-## 7. Troubleshooting
-
-| Symptom | Cause | Solution |
-| --- | --- | --- |
-| `colcon build` fails with `Could not find a package configuration file provided by "..."` | A ROS 2 package is not installed | Repeat [installation step 2.2](#22-install-the-dependencies) |
-| `Package '...' not found` at launch | The workspace is not sourced in this terminal | Run `source install/setup.bash` |
-| `Address already in use`, or Gazebo does not start | A previous Gazebo server is still running | Run `ros2 run neo_simulation2 stop_sim.sh`, then start again |
-| The Gazebo window shows no robot and no room | The window started before the world was loaded | Run `gzclient` in another terminal. Do not restart the simulation. |
-| The first start pauses for a long time | Gazebo downloads models that are not part of the repository | Wait. Internet access is required once. |
-| A node reports that `/compute_ik` or `/move_action` is not available | The node started before MoveIt was ready | Wait for `You can start planning now!`, then start the node again |
-| MoveIt goals fail with `MoveIt error -4` and the warning `more than one action server` | MoveIt was started twice | `bringup.launch.py` starts MoveIt. Do not start `neo_ur_moveit.launch.py` in addition. |
-| Nav2 reports errors about the `odom` frame | Navigation started before the simulation | Start the simulation first |
-| The arm does not move; the controllers do not start | Text in the robot description breaks the controller setup | Run `python3 src/neo_simulation2/scripts/check_urdf_for_ros2_control.py` to locate it |
-| The system runs slowly | Too many windows are open | Start with `use_moveit_rviz:=False use_monitor:=False` (see [launch options](#4-launch-options)) |
-
-### Expected log messages
-
-The following messages appear in every run. They do not indicate a fault.
-
-| Message | Explanation |
-| --- | --- |
-| `No 3D sensor plugin(s) defined for octomap updates`, `Resolution not specified for Octomap` | MoveIt has no depth camera. Objects are added to the planning scene through `/apply_planning_scene` instead. |
-| `Parameter 'hold_joints' has already been declared` | The arm and the gripper each have their own controller configuration block. |
-| `The root link base_link has an inertia specified in the URDF` | Informational message of the URDF parser. |
-| `No goal checker was specified in parameter 'current_goal_checker'` | Nav2 uses its only configured goal checker. |
-| `[Deprecated]: "allow_nonzero_velocity_at_trajectory_end"`, `Mapping from 'position' to interface ...` | Informational messages of the arm controllers. |
-| RViz `GL_INVALID_VALUE`, `/recognize_objects not available` | Graphics driver message; unused MoveIt RViz feature. |
-| After `stop_sim.sh`: `port 11345 still held (TIME_WAIT)`, `[ros2run]: Process exited with failure 1` | All processes are stopped; the network port is released within approximately 30 s. Wait before the next start. |
-| After Ctrl-C: `process has died` (RViz, monitor, `move_group`); `failed to terminate ... escalating to 'SIGKILL'` (Nav2) | Normal shutdown. Nav2 takes approximately 15 s to stop. |
-
----
-
-## 8. Known issues
-
-| Issue | Effect |
-| --- | --- |
-| `use_sim_time` is missing in the `controller_server`, `neo_localization2_node` and `waypoint_follower` sections of `configs/mpo_700/navigation.yaml` | These nodes use the system clock instead of the simulation time. Adding the key is under test: with `neo_localization2_node` on simulation time, one navigation test failed because the `map` → `odom` transform was out of date. |
-
----
-
-## 9. Terminology
-
-| Term | Definition |
-| --- | --- |
-| Workspace | The build folder, `~/ros2_ws/neobotix_workspace`. The source code is in its `src/` folder. |
-| Package | A folder with a `package.xml` file; the unit that ROS 2 builds and installs. |
-| Build | Compilation of the packages with `colcon build`. The result is written to `install/`. |
-| Source | `source install/setup.bash` makes the built packages available in the current terminal. Required in every new terminal. |
-| Node | A running ROS 2 program, for example `move_group`. |
-| Topic | A named message stream, for example `/odom` (base position and velocity) or `/cmd_vel` (velocity commands). |
-| Service | A request with an immediate response, for example the position of an object in Gazebo. |
-| Action | A long-running request with feedback and a final result, for example driving to a pose or closing the gripper. |
-| Launch file | A Python file that starts several nodes with their parameters: `ros2 launch <package> <file> [<name>:=<value> ...]`. |
-| URDF, xacro | The robot description: its parts (links) and the joints between them. Xacro is URDF with macros. |
-| Frame, TF | A coordinate system, for example `map` (the room), `base_link` (the robot base) or `grasp_tcp` (between the gripper fingers). TF maintains the transforms between all frames. |
-| Gazebo | The physics simulator: world, robot, gravity, collisions. |
-| Nav2 | The ROS 2 navigation stack: localisation on a map, path planning, driving. |
-| MoveIt | The arm motion-planning framework: collision-free arm motions. |
-| Controller | A ros2_control component that moves joints, for example `joint_trajectory_controller` for the arm. |
-| Simulation time | The Gazebo clock. Nodes started with `use_sim_time:=True` use it instead of the system clock. |
-
-### Useful commands
-
-Run these commands in a prepared terminal while the simulation is running.
-
-| Command | Output |
-| --- | --- |
-| `ros2 node list` | Running nodes |
-| `ros2 topic list` | Available topics |
-| `ros2 topic echo /odom` | Messages on a topic; stop with Ctrl-C |
-| `ros2 service list` | Available services |
-| `ros2 action list` | Available actions |
-
----
-
-## 10. Further documentation
-
-| Document | Content |
-| --- | --- |
-| [neo_simulation2/README.md](neo_simulation2/README.md#launch-files) | All launch files of the simulation and their options |
-| [neo_simulation2/README.md](neo_simulation2/README.md#comparison-with-the-physical-robot) | Origin of the settings and differences from the physical robot |
-| [ros2_robotiq_gripper/GRIPPER_INTEGRATION.md](ros2_robotiq_gripper/GRIPPER_INTEGRATION.md) | Development report: integration of the gripper into the simulation (background information) |
+The ROS 2 terms used here (topic, action, service, TF, ...) are explained in
+[Terminology.md](Terminology.md).

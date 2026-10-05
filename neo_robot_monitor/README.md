@@ -7,7 +7,7 @@ data only; it does not command the robot.
 | --- | --- |
 | Origin | This project |
 | Type | ROS 2 node with Qt window (Python) |
-| Started by | `bringup.launch.py` (disable with `use_monitor:=False`) |
+| Started by | `bringup.launch.py` with `monitor:=True` (default `False`), or standalone (see [Standalone start](#standalone-start)) |
 
 Displayed values:
 
