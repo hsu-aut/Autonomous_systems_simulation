@@ -6,6 +6,9 @@
 #     which are copies of the real robot's trees. Empty falls back to Nav2's defaults.
 #   - bt_navigator_navigate_{to,through}_pose(s)_rclcpp_node: Humble's actual node
 #     names, kept alongside the real file's bt_navigator_rclcpp_node.
+#   - general_goal_checker: xy and yaw tolerance 0.01 instead of 0.05, so the robot
+#     stops within 1 cm of the goal. The recorded arm poses of the pick-and-place
+#     mission (Stage_values.md) leave only about 1 cm between fingers and cube.
 # To re-sync after the real file changes, copy it over and re-apply the list above.
 
 neo_localization2_node:
@@ -215,8 +218,8 @@ controller_server:
       movement_time_allowance: 100.0
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.05
-      yaw_goal_tolerance: 0.05
+      xy_goal_tolerance: 0.01
+      yaw_goal_tolerance: 0.01
       stateful: True
     FollowPath:
       plugin: "neo_local_planner2::NeoLocalPlanner"
