@@ -20,15 +20,19 @@ import xacro
 """
 Description:
 
-This launch file is used to start a ROS2 simulation for a Neobotix robot in a specified environment. 
-It sets up the Gazebo simulator with the chosen robot and environment, 
+This launch file is used to start a ROS2 simulation for a Neobotix robot in a specified environment.
+It sets up the Gazebo simulator with the chosen robot and environment,
 optionally starts the robot state publisher, and enables keyboard teleoperation.
+
+It starts only Gazebo, the robot, its controllers and the helper nodes. bringup.launch.py
+(also started through simulation.launch.py) starts this file first and then the cube,
+navigation, MoveIt and the windows.
 
 You can launch this file using the following terminal commands:
 
-1. `ros2 launch neo_simulation2 simulation.launch.py --show-args`
+1. `ros2 launch neo_simulation2 gazebo_robot.launch.py --show-args`
    This command shows the arguments that can be passed to the launch file.
-2. `ros2 launch neo_simulation2 simulation.launch.py my_robot:=mpo_500 world:=neo_track1 arm_type:=ur5e`
+2. `ros2 launch neo_simulation2 gazebo_robot.launch.py my_robot:=mpo_500 world:=neo_track1 arm_type:=ur5e`
    This command launches the simulation with sample values for the arguments.
    !(only mpo_700 and mpo_500 support arms)
 """

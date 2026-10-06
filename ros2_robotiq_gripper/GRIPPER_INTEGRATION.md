@@ -214,7 +214,7 @@ where it belongs.
 
 A controller was also required. `ur_controllers.yaml` had no gripper entry, so even with working
 hardware nothing could drive the gripper. Added `position_controllers/GripperActionController`
-plus a spawner in `simulation.launch.py`.
+plus a spawner in `gazebo_robot.launch.py`.
 
 ---
 
@@ -430,7 +430,7 @@ joint_state_broadcaster:
       # ... same for the other five
 ```
 
-### `neo_simulation2/launch/simulation.launch.py`
+### `neo_simulation2/launch/gazebo_robot.launch.py`
 
 ```python
     # The Robotiq 2F-140 gripper rides along with the UR arm on the same
@@ -453,7 +453,7 @@ Added the `gazebo_ros` model-path export (Problem 5).
 ```
 neo_simulation2/components/arm/robotiq_gripper.urdf.xacro  | 83 ++++++++++++++++---
 neo_simulation2/configs/ur_config/ur10/ur_controllers.yaml | 12 +++
-neo_simulation2/launch/simulation.launch.py                |  9 ++
+neo_simulation2/launch/gazebo_robot.launch.py              |  9 ++
 ros2_robotiq_gripper/robotiq_description/package.xml       |  2 +
 ```
 
@@ -496,7 +496,7 @@ which also still works.
 
 ### Launch order
 
-`simulation.launch.py` must be fully up with the robot spawned **before** starting
+`gazebo_robot.launch.py` must be fully up with the robot spawned **before** starting
 `navigation.launch.py`, or the nav stack spams `odom` frame errors (see Problem 1).
 
 ---

@@ -15,7 +15,7 @@ def generate_launch_description():
     param_file_arg = LaunchConfiguration('param_file')
 
     # Check for the robot with which mapping needs to be done. robot_name.txt lives in
-    # the package share directory (written by simulation.launch.py) so that this launch
+    # the package share directory (written by gazebo_robot.launch.py) so that this launch
     # file works from any working directory.
     robot_name_file = os.path.join(
         get_package_share_directory('neo_simulation2'), 'robot_name.txt')

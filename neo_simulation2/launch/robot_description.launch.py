@@ -26,7 +26,7 @@ def launch_setup(context, use_sim_time_arg, use_joint_state_publisher_gui_arg, m
     my_neo_robot = my_neo_robot_arg.perform(context)
     arm_type = robot_arm_arg.perform(context)
     if arm_type.strip().lower() in ('', 'none', 'false', '0', 'no'):
-        arm_type = ''       # see simulation.launch.py: "" cannot be passed from a shell
+        arm_type = ''       # see gazebo_robot.launch.py: "" cannot be passed from a shell
 
     # IfCondition only accepts "True" or "False" 
     use_joint_state_publisher_gui = str(use_joint_state_publisher_gui_arg.perform(context).lower() == 'true')
