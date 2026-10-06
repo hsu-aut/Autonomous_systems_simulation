@@ -26,6 +26,13 @@
     <group_state name="close" group="gripper">
       <joint name="finger_joint" value="0.63" />
     </group_state>
+    <!-- Closed around the 80 mm cube of neo_sim_objects/config/objects.yaml. Measured
+         in Gazebo: the fingers touch the centred cube at 0.267. Fingers and cube do not
+         collide (spawn_objects sets this), so closing further (close) would only make
+         the fingers pass into the cube. -->
+    <group_state name="grasp_cube" group="gripper">
+      <joint name="finger_joint" value="0.265" />
+    </group_state>
 
     <end_effector name="endeffector" parent_link="${prefix_value}wrist_3_link" group="gripper"/>
 
