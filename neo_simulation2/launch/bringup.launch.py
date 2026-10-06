@@ -3,19 +3,25 @@
 # Brings up the whole stack from a single launch file:
 #
 #   1. simulation.launch.py            (Gazebo + robot + ros2_control)
-#   2. navigation.launch.py + RViz     (nav2 stack and its map view)
-#   3. neo_ur_moveit.launch.py         (move_group + MoveIt RViz, moveit:=True)
+#   2. navigation.launch.py + RViz     (nav2 stack and its map view, navigation:=True
+#                                       or navigation_rviz:=True)
+#   3. neo_ur_moveit.launch.py         (move_group + MoveIt RViz, moveit:=True or
+#                                       moveit_rviz:=True)
 #   4. neo_robot_monitor               (joint / pose window, monitor:=True)
 #   5. neo_sim_objects                 (the cube on the table, spawn_cube:=True)
 #
 # Every part is a launch argument, named after the part it starts, so this is the ONLY
-# combined launch file:
+# combined launch file. Everything except Gazebo is off by default. An RViz switch
+# also starts its component: navigation_rviz:=True starts navigation, moveit_rviz:=True
+# starts MoveIt. navigation:=True / moveit:=True start the component without a window.
 #
-#   everything                         bringup.launch.py moveit:=True navigation_rviz:=True monitor:=True
-#   default (navigation, no MoveIt,    bringup.launch.py
-#            no navigation RViz,
-#            no monitor window)
-#   navigation and MoveIt              bringup.launch.py moveit:=True
+#   default (Gazebo only)              bringup.launch.py
+#   keyboard driving                   bringup.launch.py teleop:=True
+#   navigation with its RViz           bringup.launch.py navigation_rviz:=True
+#   MoveIt with its RViz               bringup.launch.py moveit_rviz:=True
+#   navigation and MoveIt              bringup.launch.py navigation_rviz:=True moveit_rviz:=True
+#   everything                         bringup.launch.py navigation_rviz:=True moveit_rviz:=True monitor:=True
+#   no windows except Gazebo           bringup.launch.py navigation:=True moveit:=True
 #   no arm at all                      bringup.launch.py arm_type:=""
 #   headless, no windows               bringup.launch.py gazebo_gui:=False
 #
@@ -34,10 +40,10 @@
 #
 # Examples:
 #   ros2 launch neo_simulation2 bringup.launch.py
-#   ros2 launch neo_simulation2 bringup.launch.py world:=neo_track1 map:=neo_track1
-#   ros2 launch neo_simulation2 bringup.launch.py moveit:=True
-#   ros2 launch neo_simulation2 bringup.launch.py navigation:=False moveit:=True
-#   ros2 launch neo_simulation2 bringup.launch.py navigation_delay:=30.0 moveit_delay:=35.0
+#   ros2 launch neo_simulation2 bringup.launch.py navigation_rviz:=True world:=neo_track1 map:=neo_track1
+#   ros2 launch neo_simulation2 bringup.launch.py moveit_rviz:=True
+#   ros2 launch neo_simulation2 bringup.launch.py navigation_rviz:=True moveit_rviz:=True
+#   ros2 launch neo_simulation2 bringup.launch.py navigation:=True navigation_delay:=30.0
 #   ros2 launch neo_simulation2 bringup.launch.py spawn_cube:=False
 
 import os
@@ -49,7 +55,7 @@ from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
                             TimerAction, LogInfo, OpaqueFunction)
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, OrSubstitution, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -169,12 +175,12 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'world', default_value='neo_workshop',
             description='Gazebo world: "neo_workshop", "neo_track1", or "neo_table" (one big table in front '
-                        'of the robot, no walls - pair it with navigation:=False)'),
+                        'of the robot, no walls and no map - do not start navigation there)'),
         DeclareLaunchArgument(
             'arm_type', default_value='ur10',
             description='UR arm: ur5, ur10, ur5e, ur10e, or "none" for no arm (MoveIt and '
                         'the monitor\'s TCP then have nothing to attach to; leave '
-                        'moveit at False).'),
+                        'moveit and moveit_rviz at False).'),
         DeclareLaunchArgument(
             'map', default_value='neo_workshop',
             description='Map name from neo_simulation2/maps, or a full path to a .yaml'),
@@ -190,15 +196,16 @@ def generate_launch_description():
             description='Start teleop_twist_keyboard in an xterm (it rarely gets focus; '
                         'running it in your own terminal works better).'),
         DeclareLaunchArgument(
-            'navigation', default_value='True',
-            description='Start the nav2 stack'),
+            'navigation', default_value='False',
+            description='Start the nav2 stack without its RViz window. navigation_rviz:=True '
+                        'starts it as well.'),
         DeclareLaunchArgument(
             'navigation_delay', default_value='20.0',
             description='Seconds to wait for the simulation before starting navigation'),
         DeclareLaunchArgument(
             'navigation_rviz', default_value='False',
-            description='Start RViz with the navigation view. Off by default; RViz is the '
-                        'heaviest component on the machine.'),
+            description='Start the nav2 stack together with RViz showing the navigation '
+                        'view (the RViz implies navigation:=True).'),
         DeclareLaunchArgument(
             'navigation_rviz_delay', default_value='32.0',
             description='Seconds before starting the navigation RViz. Deliberately well '
@@ -208,11 +215,12 @@ def generate_launch_description():
                         'stuck in "unconfigured" and RViz with no map.'),
         DeclareLaunchArgument(
             'moveit', default_value='False',
-            description='Start move_group (requires a non-empty arm_type). Off by default; '
-                        'pass moveit:=True to plan arm and gripper motions.'),
+            description='Start move_group without its RViz window (requires a non-empty '
+                        'arm_type). moveit_rviz:=True starts it as well.'),
         DeclareLaunchArgument(
-            'moveit_rviz', default_value='True',
-            description='Start the MoveIt motion planning RViz'),
+            'moveit_rviz', default_value='False',
+            description='Start move_group together with the MoveIt motion planning RViz '
+                        '(the RViz implies moveit:=True).'),
         DeclareLaunchArgument(
             'moveit_delay', default_value='26.0',
             description='Seconds to wait for the simulation before starting MoveIt. '
@@ -275,7 +283,8 @@ def generate_launch_description():
                 }.items(),
             ),
         ],
-        condition=IfCondition(navigation),
+        # The navigation RViz is useless without navigation, so it starts navigation too.
+        condition=IfCondition(OrSubstitution(navigation, navigation_rviz)),
     )
 
     # Uses neo_simulation2/rviz/navigation.rviz, NOT neo_nav2_bringup's
@@ -324,7 +333,8 @@ def generate_launch_description():
                 }.items(),
             ),
         ],
-        condition=IfCondition(moveit),
+        # The MoveIt RViz is part of this include, so moveit_rviz starts MoveIt too.
+        condition=IfCondition(OrSubstitution(moveit, moveit_rviz)),
     )
 
     # ----------------------------------------------------------------------- cube

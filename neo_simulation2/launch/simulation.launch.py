@@ -242,7 +242,7 @@ def generate_launch_description():
         'world',
         default_value='neo_workshop',
         description='Available worlds: "neo_workshop", "neo_track1", "neo_table" (one big table, no walls - '
-                    'launch bringup.launch.py with navigation:=False), or a full path to a .world file'
+                    'do not start navigation there), or a full path to a .world file'
     )
 
     declare_arm_type_cmd = DeclareLaunchArgument(
