@@ -16,6 +16,8 @@
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>gazebo_msgs</exec_depend>
+  <!-- set_collide_bitmask: the gripper fingers do not collide with the objects -->
+  <exec_depend>neo_link_attacher</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
 
   <export>

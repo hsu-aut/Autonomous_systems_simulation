@@ -17,6 +17,7 @@ simulation, or returns them to their start position.
                        │ spawn_objects           │──▶ /get_model_list
 config/objects.yaml ──▶│ (runs once, then exits) │──▶ /spawn_entity
                        │                         │──▶ /gazebo/set_entity_state
+                       │                         │──▶ /link_attacher/set_collide_bitmask
                        └─────────────────────────┘
 ```
 
@@ -24,6 +25,11 @@ config/objects.yaml ──▶│ (runs once, then exits) │──▶ /spawn_ent
 - `/spawn_entity` adds an object that does not exist yet.
 - `/gazebo/set_entity_state` returns an existing object to its start position. The object is not
   deleted and added again: a fast delete and re-add of the same name can remove the new object.
+- `/link_attacher/set_collide_bitmask` stops the gripper's fingers and the placed objects from
+  colliding. The simulated fingers do not stop at an object: one that is not exactly centred between
+  them is hit at full speed and thrown off the table. The object is held by `/link_attacher/attach`
+  instead. Only in worlds with `neo_link_attacher` (`neo_workshop`, `neo_table`); elsewhere a warning
+  is logged.
 - The node exits with code 0 when all objects are in place, otherwise with code 1.
 
 ## Files
@@ -43,6 +49,10 @@ Each entry in `objects.yaml` requires:
 - `position: [x, y, z]`, optionally `yaw`
 - either `size: [x, y, z]` (a box with high-friction contact settings is generated) or
   `model: <file.sdf>`
+
+Also in `objects.yaml`: `gripper_model` and `gripper_links`, the robot links that must not collide
+with the objects (the gripper fingers, by their Gazebo names). An empty `gripper_links` leaves the
+collisions unchanged.
 
 ## Usage
 

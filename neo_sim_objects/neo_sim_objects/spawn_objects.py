@@ -12,6 +12,9 @@ If an object already exists it is moved back to its start pose and stopped,
 instead of being deleted and spawned again: Gazebo applies a delete a little later,
 and a quick delete-then-spawn of the same name can remove the NEW object.
 
+Afterwards the gripper's finger links (gripper_links in objects.yaml) and the objects
+are set not to collide with each other, see OBJECT_MASK.
+
 Exits 0 when every object is in place, 1 otherwise.
 """
 
@@ -25,9 +28,20 @@ from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 from gazebo_msgs.srv import GetModelList, SetEntityState, SpawnEntity
 from geometry_msgs.msg import Pose
+from neo_link_attacher.srv import SetCollideBitmask
 
 DEFAULT_MASS = 0.2                        # kg
 DEFAULT_COLOR = [0.90, 0.30, 0.18]        # red, green, blue (0 to 1)
+
+# Collision bitmasks, set through neo_link_attacher. Two collisions touch only when the
+# AND of their masks is non-zero; Gazebo's default is 0xFFFF. With the objects at 0x0001
+# and the finger links at 0xFFFE, fingers and objects pass through each other, while
+# both still collide with everything else (table, floor). The simulated fingers move
+# kinematically: closing on an object that is not exactly centred, the first finger
+# hits it at full speed and Gazebo throws it off the table (measured: 9 mm off centre
+# is enough). The object is held by neo_link_attacher's attach instead.
+OBJECT_MASK = 0x0001
+GRIPPER_MASK = 0xFFFE
 
 # A box. The surface values matter more than the shape: Gazebo tends to shoot
 # objects out from between gripper fingers, and these are the usual remedy -
@@ -91,9 +105,12 @@ class ObjectSpawner(Node):
         super().__init__('spawn_objects', automatically_declare_parameters_from_overrides=True)
         self.reset = self.param('reset', True)
         self.names = list(self.param('objects', []))
+        self.gripper_model = self.param('gripper_model', 'mpo_700')
+        self.gripper_links = list(self.param('gripper_links', []))
         self.list_cli = self.create_client(GetModelList, '/get_model_list')
         self.spawn_cli = self.create_client(SpawnEntity, '/spawn_entity')
         self.set_state_cli = self.create_client(SetEntityState, '/gazebo/set_entity_state')
+        self.mask_cli = self.create_client(SetCollideBitmask, '/link_attacher/set_collide_bitmask')
 
     def param(self, name, default):
         return self.get_parameter(name).value if self.has_parameter(name) else default
@@ -167,6 +184,7 @@ class ObjectSpawner(Node):
             return 1
 
         ok = True
+        placed = []
         for name in self.names:
             spec, why = self.spec(name)
             if spec is None:
@@ -175,11 +193,17 @@ class ObjectSpawner(Node):
                 continue
             pose, sdf = spec
             if name not in present:
-                ok &= self.spawn(name, pose, sdf)
+                done = self.spawn(name, pose, sdf)
             elif self.reset:
-                ok &= self.move_back(name, pose)
+                done = self.move_back(name, pose)
             else:
                 log.info('"%s" already exists; leaving it where it is' % name)
+                done = True
+            ok &= done
+            if done:
+                placed.append(name)
+        if placed and self.gripper_links:
+            self.separate_from_gripper(placed)
         return 0 if ok else 1
 
     def spawn(self, name, pose, sdf):
@@ -210,6 +234,28 @@ class ObjectSpawner(Node):
         self.get_logger().info('moved "%s" back to x=%.3f y=%.3f z=%.3f'
                                % (name, pose.position.x, pose.position.y, pose.position.z))
         return True
+
+    def separate_from_gripper(self, names):
+        """Stop the gripper's finger links and these objects from colliding (OBJECT_MASK).
+
+        Only a warning when it fails: the objects are in place either way."""
+        log = self.get_logger()
+        if not self.mask_cli.wait_for_service(timeout_sec=2.0):
+            log.warning('%s not available (world without neo_link_attacher) - the gripper '
+                        'fingers still collide with the objects' % self.mask_cli.srv_name)
+            return
+        targets = ([(name, '', OBJECT_MASK) for name in names] +
+                   [(self.gripper_model, link, GRIPPER_MASK) for link in self.gripper_links])
+        failed = 0
+        for model, link, mask in targets:
+            res = self.call(self.mask_cli, SetCollideBitmask.Request(model=model, link=link, bitmask=mask))
+            if res is None or not res.ok:
+                failed += 1
+                log.warning('collision mask of %s/%s not set%s'
+                            % (model, link or '*', '' if res is None else ': ' + res.message))
+        if not failed:
+            log.info('the fingers of "%s" do not collide with %s'
+                     % (self.gripper_model, ', '.join('"%s"' % n for n in names)))
 
 
 def main(args=None):
