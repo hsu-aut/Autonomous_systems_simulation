@@ -302,6 +302,8 @@ understand or change it.
 | [ros2_robotiq_gripper](ros2_robotiq_gripper/README.md) | 3D model of the gripper | PickNik Robotics |
 | **Tools** | | |
 | [neo_robot_monitor](neo_robot_monitor/README.md) | Window that displays the robot state | This project |
+| **Libraries** | | |
+| [tf2](tf2/README.md) | Transform library (version 0.25.24); used instead of the version installed by `apt` | Third-party (ROS 2) |
 | **Built, not used by the simulation** | | |
 | [neo_msgs2](neo_msgs2/README.md), [neo_srvs2](neo_srvs2/README.md) | Message and service types for Neobotix hardware | Neobotix |
 | [serial](serial/README.md) | Serial-port library for the gripper hardware driver | Third-party |

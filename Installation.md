@@ -100,7 +100,7 @@ run:
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon build --symlink-install --allow-overriding robotiq_description \
+colcon build --symlink-install --allow-overriding robotiq_description tf2 \
   --base-paths $(ls -d src/*/ | grep -v mpo_700_workspace)
 ```
 
@@ -111,8 +111,9 @@ along the way are normal.
 >
 > - `--base-paths` leaves out the folder `src/mpo_700_workspace`, if it is present. That folder must not
 >   be built in this workspace.
-> - `--allow-overriding` lets the package `robotiq_description` of this repository replace the version
->   installed by `apt`.
+> - `--allow-overriding` lets the packages `robotiq_description` and `tf2` of this repository replace
+>   the versions installed by `apt`. `tf2` is the ROS 2 transform library in version 0.25.24, newer than
+>   the one `apt` offers; Nav2 needs it to run reliably (see [tf2/README.md](tf2/README.md)).
 > - `--symlink-install` links Python, YAML, launch and xacro files from `src/` instead of copying them.
 
 **When to build again.** After you change files in `src/`:
