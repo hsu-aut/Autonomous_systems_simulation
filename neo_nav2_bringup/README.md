@@ -67,19 +67,19 @@ direction the robot is to face.
 ### From a terminal
 
 The simulation must be running with navigation in `neo_workshop` (start option 2 or 4). These
-commands send the robot to the pick-up, drop and home positions of the pick-and-place mission
-([Stage_values.md](../Stage_values.md#2-robot-positions)):
+commands drive the mobile platform to the pick, place and home positions of the pick-and-place
+mission ([Stage_values.md](../Stage_values.md#2-robot-positions)); the arm does not move:
 
 ```bash
-# Pick-up position, in front of the pick table (x -1.51 m, y -3.58 m, yaw -90°)
+# Pick position, in front of the pick table (x -1.51 m, y -3.58 m, yaw -90°)
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: map}, pose: {position: {x: -1.51, y: -3.58}, orientation: {z: -0.7071, w: 0.7071}}}}"
 
-# Drop position, in front of the place table (x -4.65 m, y -3.56 m, yaw -90°)
+# Place position, in front of the place table (x -4.65 m, y -3.56 m, yaw -90°)
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: map}, pose: {position: {x: -4.65, y: -3.56}, orientation: {z: -0.7071, w: 0.7071}}}}"
 
-# Home, the start position (x -0.02 m, y 0.00 m, yaw 0°)
+# Home position, back at the start (x -0.02 m, y 0.00 m, yaw 0°)
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: map}, pose: {position: {x: -0.02, y: 0.0}, orientation: {z: 0.0, w: 1.0}}}}"
 ```

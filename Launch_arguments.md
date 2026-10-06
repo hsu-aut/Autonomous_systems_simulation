@@ -85,7 +85,7 @@ Navigation starts after 20 s, the navigation RViz window after 32 s. To send the
    is to face. Release the button.
 
 The robot plans a path and drives to the goal. To send goals from a terminal instead, see
-[README, section 1.4](README.md#14-drive-to-the-pick-up-drop-and-home-positions).
+[README, section 1.4](README.md#14-mobile-platform-drive-autonomously-to-the-pick-place-and-home-positions).
 
 ### 2.3 Option 3: arm and gripper motions
 
@@ -94,9 +94,12 @@ MoveIt and its RViz window start after 26 s. To move the arm or the gripper, use
 
 1. Select the planning group: `ur_manipulator` (the arm) or `gripper`.
 2. Set the goal: drag the marker at the tool of the arm, or select a stored pose under **Goal State**
-   (for example `up` for the arm, `open` or `close` for the gripper). To grip the cube, use
+   (for example `home` for the arm, `open` or `close` for the gripper). To grip the cube, use
    `grasp_cube` instead of `close`: it stops the fingers at the cube's faces.
 3. Click **Plan & Execute**.
+
+The three arm poses of the pick-and-place mission (`home`, `pregrasp`, `grasp`) are listed in
+[README, section 1.5](README.md#15-manipulator-arm-move-to-the-mission-poses).
 
 ### 2.4 Option 4: navigation and MoveIt
 
