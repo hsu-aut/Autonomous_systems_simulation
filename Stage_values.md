@@ -58,25 +58,22 @@ gripper. Either form can be used as a goal for MoveIt.
 | --- | --- |
 | Arm joints | Angles of `shoulder_pan`, `shoulder_lift`, `elbow`, `wrist_1`, `wrist_2`, `wrist_3`, in this order (the joint names start with `ur10`, for example `ur10elbow_joint`) |
 | Gripper | Position of the grasp point `grasp_tcp`, between the gripper fingers, relative to `base_link`: the centre of the mobile platform at floor level; x forward, y left, z up. This is not the base of the UR10 arm (`ur10base_link`), which is mounted at x = 0.158 m, y = 0 m, z = 0.766 m in `base_link`, turned by −90° about z. |
-| Finger | Gripper opening: `0` = open, `0.17` = closed on the 100 mm cube |
+| Finger | Gripper opening (`finger_joint`): `0` = open, `0.265` = closed on the 80 mm cube |
 
 | Pose | Stage | Arm joints (rad) | Gripper x, y, z (m) | Finger (rad) |
 | --- | --- | --- | --- | --- |
 | Home (travel pose) | S1 | 1.49, −2.50, 2.00, 0.00, −1.49, 0.01 | −0.01, 0.20, 1.30 | −0.01 |
-| Pre-grasp | S5 | 1.23, −1.97, 2.27, −1.89, −1.57, −1.90 | 0.62, 0.01, 1.01 | 0.00 |
-| Grasp | S8 | 1.23, −1.79, 2.48, −2.25, −1.57, −1.91 | 0.61, 0.01, 0.85 | 0.17 |
-| Lift | S10 | 1.23, −1.92, 2.35, −2.00, −1.57, −1.91 | 0.61, 0.01, 0.95 | 0.17 |
-| Pre-place | S15 | 1.17, −1.96, 2.27, −1.88, −1.56, −1.96 | 0.62, −0.02, 1.00 | 0.17 |
-| Place | S16 | 1.18, −1.80, 2.47, −2.24, −1.57, −1.97 | 0.61, −0.01, 0.85 | 0.17 |
-| Retreat | S18 | 1.18, −1.97, 2.28, −1.88, −1.57, −1.97 | 0.61, −0.01, 1.00 | 0.00 |
-
-> **Note:** All poses except Home are valid only with the robot at the recorded pick and place
-> positions.
+| Pre-grasp | S5 | 1.23, −1.97, 2.27, −1.89, −1.57, −0.33 | 0.62, 0.01, 1.01 | 0.00 |
+| Grasp | S8 | 1.23, −1.79, 2.48, −2.25, −1.57, −0.34 | 0.61, 0.01, 0.85 | 0.265 |
+| Lift | S10 | 1.23, −1.92, 2.35, −2.00, −1.57, −0.34 | 0.61, 0.01, 0.95 | 0.265 |
+| Pre-place | S15 | 1.17, −1.96, 2.27, −1.88, −1.56, −0.39 | 0.62, −0.02, 1.00 | 0.265 |
+| Place | S16 | 1.18, −1.80, 2.47, −2.24, −1.57, −0.40 | 0.61, −0.01, 0.85 | 0.265 |
+| Retreat | S18 | 1.18, −1.97, 2.28, −1.88, −1.57, −0.40 | 0.61, −0.01, 1.00 | 0.00 |
 
 ## 4. Using the values in a MoveIt client
 
-The client needs MoveIt, which starts only with `moveit:=True` (start options 3 and 4 in the
-[README](README.md#12-start-the-simulation)).
+The client needs MoveIt, which starts only with `moveit:=True` or `moveit_rviz:=True` (start options
+3 and 4 in the [README](README.md#12-start-the-simulation)).
 
 | Item | Value |
 | --- | --- |
@@ -90,11 +87,13 @@ How to use the values:
 
 - **Home:** use the joint values as a joint goal.
 - **Other poses:** use pose goals for `grasp_tcp` at the gripper position from the table, with the
-  orientation (0.707, −0.707, 0, 0) (gripper pointing down). If you use `ur10tool0` as end-effector
-  link instead: 0.188 m higher, orientation (1, 0, 0, 0).
+  orientation (x, y, z, w) = (0, 1, 0, 0) (gripper pointing down, fingers closing sideways). If you
+  use `ur10tool0` as end-effector link instead: 0.188 m higher, orientation (0.707, −0.707, 0, 0).
 - **Straight lines:** plan pre-grasp → grasp → lift and pre-place → place → retreat with the Pilz `LIN`
   planner, so that the gripper moves in a straight line; plan all other motions with OMPL.
-- **Gripper:** open with position `0.0`; close with position `0.175` and max effort `60`.
+- **Gripper:** open with position `0.0`; close on the cube with position `0.265` and max effort `60` (MoveIt gripper pose `grasp_cube`).
+  The fingers end at the cube's faces. Fingers and cube do not collide (set by `spawn_objects`), so an
+  off-centre cube is not pushed away; the cube is held by attaching it (below).
 - **Tables:** add both tables to the planning scene, so that MoveIt plans around them. Each table
   consists of three boxes around the table centre (pick table −1.492, −4.548; place table −4.668,
   −4.529 on the map):
@@ -106,6 +105,6 @@ How to use the values:
   | Foot | 0.56 × 0.56 × 0.04 | 0.015 |
 
   Convert the positions to `base_link` with the robot position.
-- **Holding the cube:** attach the cube to `grasp_tcp` in the planning scene, so that MoveIt treats it
+- **Holding the cube:** attach the cube (an 80 mm box) to `grasp_tcp` in the planning scene, so that MoveIt treats it
   as part of the gripper. In Gazebo, also call `/link_attacher/attach`, so that the cube moves with
   the gripper (see [neo_link_attacher](neo_link_attacher/README.md)).

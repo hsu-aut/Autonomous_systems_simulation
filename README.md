@@ -17,7 +17,7 @@ With the simulation you can:
 
 1. Install the simulation once: [Installation.md](Installation.md).
 2. Start the simulation, for example with all components:
-   `ros2 launch neo_simulation2 bringup.launch.py moveit:=True`
+   `ros2 launch neo_simulation2 bringup.launch.py navigation_rviz:=True moveit_rviz:=True`
    (the other start options are in [section 1.2](#12-start-the-simulation)).
 3. Stop the simulation: `ros2 run neo_simulation2 stop_sim.sh`
 
@@ -69,26 +69,56 @@ There are four start options. Choose the one that fits what you want to do:
 | 1. Gazebo only | drive the robot yourself with the keyboard | Gazebo, keyboard window |
 | 2. Gazebo + Navigation | let the robot drive to goals on its own | Gazebo, navigation RViz |
 | 3. Gazebo + MoveIt | move the arm and the gripper | Gazebo, MoveIt RViz |
-| 4. Gazebo + Navigation + MoveIt | do both, for example the pick-and-place mission | Gazebo, MoveIt RViz |
+| 4. Gazebo + Navigation + MoveIt | do both, for example the pick-and-place mission | Gazebo, navigation RViz, MoveIt RViz |
 
 Gazebo shows the simulated world with the robot. RViz shows what the robot knows (map, laser scans,
 planned paths and arm motions), and you give it goals there.
 
 In a terminal, run the command of your option:
 
+**1. Gazebo only**, driving with the keyboard:
+
 ```bash
-# 1. Gazebo only, driving with the keyboard
-ros2 launch neo_simulation2 bringup.launch.py navigation:=False teleop:=True
+ros2 launch neo_simulation2 bringup.launch.py teleop:=True
+```
 
-# 2. Gazebo + Navigation
+**2. Gazebo + Navigation**:
+
+```bash
 ros2 launch neo_simulation2 bringup.launch.py navigation_rviz:=True
+```
 
-# 3. Gazebo + MoveIt (arm and gripper)
-ros2 launch neo_simulation2 bringup.launch.py navigation:=False moveit:=True
+**3. Gazebo + MoveIt** (arm and gripper):
 
-# 4. Gazebo + Navigation + MoveIt
+```bash
+ros2 launch neo_simulation2 bringup.launch.py moveit_rviz:=True
+```
+
+**4. Gazebo + Navigation + MoveIt**:
+
+```bash
+ros2 launch neo_simulation2 bringup.launch.py navigation_rviz:=True moveit_rviz:=True
+```
+
+Everything except Gazebo is off by default. `navigation_rviz:=True` and `moveit_rviz:=True` start
+navigation and MoveIt together with their RViz windows. To start them without a window, for example
+when your own program sends the goals, use `navigation:=True` or `moveit:=True` instead.
+
+| Argument | Default | `True` starts |
+| --- | :---: | --- |
+| `navigation` | `False` | Navigation, without its RViz window |
+| `navigation_rviz` | `False` | Navigation **and** its RViz window |
+| `moveit` | `False` | MoveIt, without its RViz window |
+| `moveit_rviz` | `False` | MoveIt **and** its RViz window |
+
+For example, MoveIt only, without its window:
+
+```bash
 ros2 launch neo_simulation2 bringup.launch.py moveit:=True
 ```
+
+How the switches combine (for example, both `moveit` and `moveit_rviz` set to `True`) is described in
+[Launch_arguments.md](Launch_arguments.md#25-navigation-moveit-and-their-rviz-windows).
 
 The components start one after the other: the Gazebo window after about 6 s, navigation after 20 s,
 MoveIt after 26 s. The start is complete after about 40 s; wait until then before you send goals. The
@@ -142,16 +172,23 @@ With navigation running in `neo_workshop` (option 2 or 4), you can send the robo
 the pick-and-place mission ([Stage_values.md](Stage_values.md#2-robot-positions)). Run one of these
 commands in a second terminal:
 
+**Pick-up position**, in front of the pick table (x -1.51 m, y -3.58 m, yaw -90°):
+
 ```bash
-# Pick-up position, in front of the pick table (x -1.51 m, y -3.58 m, yaw -90°)
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: map}, pose: {position: {x: -1.51, y: -3.58}, orientation: {z: -0.7071, w: 0.7071}}}}"
+```
 
-# Drop position, in front of the place table (x -4.65 m, y -3.56 m, yaw -90°)
+**Drop position**, in front of the place table (x -4.65 m, y -3.56 m, yaw -90°):
+
+```bash
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: map}, pose: {position: {x: -4.65, y: -3.56}, orientation: {z: -0.7071, w: 0.7071}}}}"
+```
 
-# Home, the start position (x -0.02 m, y 0.00 m, yaw 0°)
+**Home**, the start position (x -0.02 m, y 0.00 m, yaw 0°):
+
+```bash
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: map}, pose: {position: {x: -0.02, y: 0.0}, orientation: {z: 0.0, w: 1.0}}}}"
 ```
@@ -164,12 +201,16 @@ to other positions is described in
 
 In a second terminal:
 
+**Open**:
+
 ```bash
-# Open
 ros2 action send_goal /robotiq_gripper/robotiq_gripper_controller/gripper_cmd \
   control_msgs/action/GripperCommand "{command: {position: 0.07, max_effort: 60.0}}"
+```
 
-# Close
+**Close**:
+
+```bash
 ros2 action send_goal /robotiq_gripper/robotiq_gripper_controller/gripper_cmd \
   control_msgs/action/GripperCommand "{command: {position: 0.63, max_effort: 60.0}}"
 ```
@@ -180,12 +221,28 @@ In Gazebo, the gripper fingers alone cannot hold the cube reliably. To carry it,
 around the cube and then attach the cube to the gripper. To put it down, detach it and then open the
 gripper. This works in `neo_workshop` and `neo_table`.
 
+Close the gripper around the 80 mm cube with `position: 0.265`: the fingers then end at the cube's
+faces. The fingers and the cube do not collide (`spawn_objects` switches this off when it places the
+cube), so a cube that is not exactly centred between the fingers is not pushed away; the cube is held
+by `attach`.
+
+**Close the gripper around the cube** (in RViz: gripper **Goal State** `grasp_cube`):
+
 ```bash
-# Attach the cube to the gripper
+ros2 action send_goal /robotiq_gripper/robotiq_gripper_controller/gripper_cmd \
+  control_msgs/action/GripperCommand "{command: {position: 0.265, max_effort: 60.0}}"
+```
+
+**Attach the cube to the gripper**:
+
+```bash
 ros2 service call /link_attacher/attach neo_link_attacher/srv/Attach \
   "{model1: mpo_700, link1: ur10wrist_3_link, model2: cube, link2: link}"
+```
 
-# Detach the cube
+**Detach the cube**:
+
+```bash
 ros2 service call /link_attacher/detach neo_link_attacher/srv/Attach \
   "{model1: mpo_700, link1: ur10wrist_3_link, model2: cube, link2: link}"
 ```

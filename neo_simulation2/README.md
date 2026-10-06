@@ -1,8 +1,8 @@
 # neo_simulation2
 
 This package provides the Gazebo simulation of the MPO-700: world files, robot description, controller
-configuration, helper nodes, and `bringup.launch.py`, which starts the simulation with navigation and,
-with `moveit:=True`, MoveIt.
+configuration, helper nodes, and `bringup.launch.py`, which starts the simulation and, on request,
+navigation, MoveIt and their RViz windows.
 
 | Property | Value |
 | --- | --- |
@@ -33,9 +33,11 @@ simulated robot to be running.
        │
  10 s ─┼─ cube                   neo_sim_objects; only with spawn_cube:=True (default)
        │
- 20 s ─┼─ navigation.launch.py   map, localisation, Nav2
+ 20 s ─┼─ navigation.launch.py   map, localisation, Nav2; only with navigation:=True or
+       │                         navigation_rviz:=True
        │
- 26 s ─┼─ MoveIt                 move_group and the MoveIt window; only with moveit:=True
+ 26 s ─┼─ MoveIt                 move_group; only with moveit:=True or moveit_rviz:=True
+       │                         (the MoveIt window only with moveit_rviz:=True)
        │
  32 s ─┼─ navigation window      only with navigation_rviz:=True
        │
@@ -133,7 +135,7 @@ Controllers (`configs/ur_config/ur10/ur_controllers.yaml`):
 | World (`world:=`) | Content | Map (`map:=`) |
 | --- | --- | --- |
 | `neo_workshop` (default) | Workshop with two tables | `neo_workshop` |
-| `neo_table` | One table with a cube; robot parked in front of it | None; set `navigation:=False` |
+| `neo_table` | One table with a cube; robot parked in front of it | None; do not start navigation |
 | `neo_track1`, `neo_track2` | Driving tracks | `neo_track1`, `neo_track2` |
 
 `neo_workshop` and `neo_table` load two Gazebo world plugins: `gazebo_ros_state` (positions of all
@@ -284,6 +286,7 @@ Use of the lidar topics:
 | Grasp frames | `grasp_tcp`, `grasp_tip`, `gripper_tcp` | `gripper_tcp` | Exact finger centre and fingertip for grasp planning |
 | Clock | Simulation time | System clock | Gazebo provides the clock |
 | Odometry rate (`/odom`, TF `odom → base_link`) | 50 Hz; velocity commands applied at 100 Hz | Driver setting | Reduced message load; Nav2 sends velocity commands at 50 Hz |
+| Navigation goal tolerance (`general_goal_checker`) | 0.01 m, 0.01 rad | 0.05 m, 0.05 rad | The recorded grasp poses ([Stage_values.md](../Stage_values.md)) leave only about 1 cm between fingers and cube, so the robot must stop within 1 cm of the pick position |
 
 ### Source of the settings
 

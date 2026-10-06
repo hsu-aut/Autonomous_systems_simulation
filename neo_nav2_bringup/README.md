@@ -60,9 +60,9 @@ or from a terminal.
 
 ### In RViz
 
-Start the simulation with the navigation RViz window (`navigation_rviz:=True`, start option 2). Click
-**Nav2 Goal** in the RViz toolbar, click on the target position in the map, and drag in the direction
-the robot is to face.
+Start the simulation with the navigation RViz window (`navigation_rviz:=True`, start option 2 or 4).
+Click **Nav2 Goal** in the RViz toolbar, click on the target position in the map, and drag in the
+direction the robot is to face.
 
 ### From a terminal
 

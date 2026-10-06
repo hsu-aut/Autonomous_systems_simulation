@@ -49,7 +49,7 @@ so try the [first steps](#1-first-steps) before anything else.
 | The Gazebo window shows no robot and no room | The window opened before the world was loaded. | Run `gzclient` in another terminal; this opens a new Gazebo window. Do not restart the simulation. |
 | The arm does not move; the controllers do not start | Text in the robot description breaks the controller setup. | Run `python3 src/neo_simulation2/scripts/check_urdf_for_ros2_control.py`; it shows where the text is. |
 | `ros2 node list` or `ros2 topic list` in another terminal does not show the running simulation | That terminal uses different middleware settings or a different domain ID than the simulation. | Check `echo $RMW_IMPLEMENTATION $ROS_DOMAIN_ID`, set the variables from [installation step 7](Installation.md#7-configure-the-ros-2-middleware), then run `ros2 daemon stop`. |
-| The computer runs slowly | Too many windows are open. | With `moveit:=True`, add `moveit_rviz:=False` (see [common combinations](Launch_arguments.md#3-common-combinations)). |
+| The computer runs slowly | Too many windows are open. | Start navigation and MoveIt without their RViz windows: `navigation:=True` and `moveit:=True` instead of `navigation_rviz:=True` and `moveit_rviz:=True` (see [common combinations](Launch_arguments.md#3-common-combinations)). |
 
 ## 4. Navigation and MoveIt
 
@@ -58,8 +58,8 @@ so try the [first steps](#1-first-steps) before anything else.
 | `unknown goal response`, `unknown result response` (Nav2 or MoveIt); `Failed to change state for node: map_server` | Nodes of an earlier simulation are still running, so every node exists twice and the wrong one answers. | Run `ros2 run neo_simulation2 stop_sim.sh`, check with `ros2 node list` that no node is left, then start again. |
 | Nav2 rejects goals or does not respond; `Failed to send goal response` in the log; `neo_localization2_node`: `"odom" passed to lookupTransform argument target_frame does not exist` | The simulation runs on Fast DDS, which loses messages while the nodes start. | Configure Cyclone DDS ([installation step 7](Installation.md#7-configure-the-ros-2-middleware)) and restart the simulation. |
 | Nav2 reports errors about the `odom` frame | Navigation was started before the simulation. | Start the simulation first. |
-| A node reports that `/compute_ik` or `/move_action` is not available | MoveIt was not started, or the node started before MoveIt was ready. | Start the simulation with `moveit:=True` (MoveIt is off by default). If you did, wait until the start-up has finished (about 40 s, see the [start-up sequence](neo_simulation2/README.md#start-up-sequence)), then start the node again. |
-| MoveIt goals fail with `MoveIt error -4` and the warning `more than one action server` | MoveIt was started twice. | `bringup.launch.py moveit:=True` already starts MoveIt. Do not also start `neo_ur_moveit.launch.py`. |
+| A node reports that `/compute_ik` or `/move_action` is not available | MoveIt was not started, or the node started before MoveIt was ready. | Start the simulation with `moveit_rviz:=True` or `moveit:=True` (MoveIt is off by default). If you did, wait until the start-up has finished (about 40 s, see the [start-up sequence](neo_simulation2/README.md#start-up-sequence)), then start the node again. |
+| MoveIt goals fail with `MoveIt error -4` and the warning `more than one action server` | MoveIt was started twice. | `bringup.launch.py` already starts MoveIt with `moveit:=True` or `moveit_rviz:=True`. Do not also start `neo_ur_moveit.launch.py`. |
 | MoveIt: `Failed to initialize planning pipeline 'pilz_industrial_motion_planner'` | The Pilz planner is not installed. | Repeat [installation step 3](Installation.md#3-install-the-dependencies). |
 
 ## 5. Messages you can ignore
