@@ -42,7 +42,7 @@ def launch_setup(context: LaunchContext,
     robots = ["mpo_700", "mp_400", "mp_500", "mpo_500"]
 
     # Reading the selected robot from robot_name.txt. It lives in the package share
-    # directory (written by simulation.launch.py) so that this launch file works from
+    # directory (written by gazebo_robot.launch.py) so that this launch file works from
     # any working directory.
     robot_name_file = os.path.join(
         get_package_share_directory('neo_simulation2'), 'robot_name.txt')

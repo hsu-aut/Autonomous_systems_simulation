@@ -2,7 +2,7 @@
 #
 # Brings up the whole stack from a single launch file:
 #
-#   1. simulation.launch.py            (Gazebo + robot + ros2_control)
+#   1. gazebo_robot.launch.py          (Gazebo + robot + ros2_control)
 #   2. navigation.launch.py + RViz     (nav2 stack and its map view, navigation:=True
 #                                       or navigation_rviz:=True)
 #   3. neo_ur_moveit.launch.py         (move_group + MoveIt RViz, moveit:=True or
@@ -11,7 +11,9 @@
 #   5. neo_sim_objects                 (the cube on the table, spawn_cube:=True)
 #
 # Every part is a launch argument, named after the part it starts, so this is the ONLY
-# combined launch file. Everything except Gazebo is off by default. An RViz switch
+# combined launch file. simulation.launch.py (the start command of the original
+# Neobotix package) only includes this file, so both have the same arguments and start
+# the same components. Everything except Gazebo is off by default. An RViz switch
 # also starts its component: navigation_rviz:=True starts navigation, moveit_rviz:=True
 # starts MoveIt. navigation:=True / moveit:=True start the component without a window.
 #
@@ -30,7 +32,7 @@
 #
 # Ordering matters and is enforced with TimerAction. navigation and MoveIt both
 # need the simulation fully up first:
-#   - navigation.launch.py reads robot_name.txt, which simulation.launch.py writes
+#   - navigation.launch.py reads robot_name.txt, which gazebo_robot.launch.py writes
 #   - MoveIt binds to /joint_trajectory_controller and /robotiq_gripper_controller
 #     (through gripper_action_relay), which only exist once gazebo_ros2_control has
 #     started controller_manager
@@ -257,7 +259,7 @@ def generate_launch_description():
     # ------------------------------------------------------------------ simulation
     simulation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [FindPackageShare('neo_simulation2'), 'launch', 'simulation.launch.py'])),
+            [FindPackageShare('neo_simulation2'), 'launch', 'gazebo_robot.launch.py'])),
         launch_arguments={
             'my_robot': my_robot,
             'world': world,

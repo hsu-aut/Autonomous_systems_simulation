@@ -63,7 +63,7 @@ def generated_descriptions():
     for robot, arm, gz, dock in itertools.product(ROBOTS, ARMS, ('true', 'false'),
                                                    ('False', 'True')):
         if arm and robot not in ('mpo_700', 'mpo_500'):
-            continue                     # simulation.launch.py drops the arm here
+            continue                     # gazebo_robot.launch.py drops the arm here
         if dock == 'True' and robot != 'mpo_700':
             continue                     # docking adapter is MPO-700 only
         path = os.path.join(WS, 'src', 'neo_simulation2', 'robots', robot,
