@@ -2,13 +2,13 @@
 
 This package provides the Gazebo simulation of the MPO-700: world files, robot description, controller
 configuration, helper nodes, and `bringup.launch.py`, which starts the simulation and, on request,
-navigation, MoveIt and their RViz windows.
+navigation, MoveIt and their RViz windows. `simulation.launch.py` starts the same.
 
 | Property | Value |
 | --- | --- |
 | Origin | Neobotix; extended for this project (UR10 arm, Robotiq 2F-140 gripper, settings of the physical robot, see [Comparison with the physical robot](#comparison-with-the-physical-robot)) |
 | Type | Launch files, robot description, configuration, helper nodes (Python) |
-| Start command | `ros2 launch neo_simulation2 bringup.launch.py` |
+| Start command | `ros2 launch neo_simulation2 bringup.launch.py` (or `simulation.launch.py`, the same) |
 | Options | [Launch files](#launch-files) |
 
 Contents:
@@ -25,11 +25,11 @@ Contents:
 
 ## Start-up sequence
 
-`bringup.launch.py` starts the components in the following order. Navigation and MoveIt require the
-simulated robot to be running.
+`bringup.launch.py` and `simulation.launch.py` start the components in the following order.
+Navigation and MoveIt require the simulated robot to be running.
 
 ```text
-  0 s ─┬─ simulation.launch.py   Gazebo, robot, controllers, helper nodes
+  0 s ─┬─ gazebo_robot.launch.py Gazebo, robot, controllers, helper nodes
        │
  10 s ─┼─ cube                   neo_sim_objects; only with spawn_cube:=True (default)
        │
@@ -82,7 +82,8 @@ Nav2, applications    │ robot_state_publisher │ ────▶ TF  │ sim_
 neo_simulation2/
 ├── launch/
 │   ├── bringup.launch.py              complete system (standard start)
-│   ├── simulation.launch.py           Gazebo, robot, controllers, helper nodes
+│   ├── simulation.launch.py           the same as bringup.launch.py (includes it)
+│   ├── gazebo_robot.launch.py         Gazebo, robot, controllers, helper nodes
 │   ├── navigation.launch.py           map, localisation, Nav2 (includes neo_nav2_bringup)
 │   ├── mapping.launch.py              map building (slam_toolbox)
 │   └── robot_description.launch.py    robot model in RViz, without Gazebo
@@ -152,7 +153,8 @@ General usage:
 | Launch file | Starts | Use |
 | --- | --- | --- |
 | [bringup.launch.py](#bringuplaunchpy) | Gazebo, robot, navigation, MoveIt, windows | Standard start of the simulation |
-| [simulation.launch.py](#simulationlaunchpy) | Gazebo and robot | Simulation without navigation and MoveIt |
+| [simulation.launch.py](#simulationlaunchpy) | The same as `bringup.launch.py` | Start command of the original Neobotix package |
+| [gazebo_robot.launch.py](#gazebo_robotlaunchpy) | Gazebo and robot | Simulation without cube, navigation and MoveIt |
 | [navigation.launch.py](#navigationlaunchpy) | Navigation | Adds navigation to a running simulation |
 | [mapping.launch.py](#mappinglaunchpy) | Map building | Creates a map of a new world |
 | [robot_description.launch.py](#robot_descriptionlaunchpy) | Robot model in RViz, without Gazebo | Inspection of the robot model |
@@ -181,8 +183,20 @@ All arguments, common combinations and examples: [Launch_arguments.md](../Launch
 ros2 launch neo_simulation2 simulation.launch.py
 ```
 
-- Starts Gazebo, the robot and its controllers, without navigation and MoveIt.
-- Options: `world`, `arm_type`, `gazebo_gui` (as for `bringup.launch.py`).
+- Starts the same as `bringup.launch.py`: it only includes that file.
+- Accepts all arguments of `bringup.launch.py`, with the same defaults, for example
+  `ros2 launch neo_simulation2 simulation.launch.py navigation_rviz:=True moveit_rviz:=True`.
+- The name is the start command of the original Neobotix package.
+
+### gazebo_robot.launch.py
+
+```bash
+ros2 launch neo_simulation2 gazebo_robot.launch.py
+```
+
+- Starts Gazebo, the robot and its controllers, without the cube, navigation and MoveIt.
+  `bringup.launch.py` starts it first.
+- Options: `world`, `arm_type`, `gazebo_gui`, `teleop` (as for `bringup.launch.py`).
 
 To drive the robot with the keyboard, run in a second terminal:
 

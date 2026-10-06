@@ -1,7 +1,9 @@
 # Launch arguments
 
 The simulation is started with one launch file, `bringup.launch.py`. Launch arguments switch its
-parts on or off and change settings, for example which world is loaded or which windows open. This
+parts on or off and change settings, for example which world is loaded or which windows open.
+`simulation.launch.py` starts the same and accepts the same arguments; you can use it instead of
+`bringup.launch.py` in every command of this document. This
 document explains how to pass arguments, how to use the four start options, and lists all arguments.
 
 The other launch files of the simulation are described in
