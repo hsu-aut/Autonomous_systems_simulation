@@ -111,7 +111,7 @@ and MoveIt use. `bringup.launch.py` starts them.
 | --- | --- |
 | `sim_scan_filter.py` | Limits each lidar scan to ±130° (`lidar_N/scan` → `lidar_N/scan_filtered`) and merges both lidars into `/scan` |
 | `gripper_action_relay.py` | Provides the gripper action under the name used by MoveIt, and forwards each goal to the gripper controller |
-| `stop_sim.sh` | Not a node. Stops every simulation launch with all of its nodes, and nodes left behind by an earlier launch: `ros2 run neo_simulation2 stop_sim.sh`. Nodes that ignore Ctrl-C are stopped with SIGTERM or SIGKILL. See [README, Stop the simulation](../README.md#17-stop-the-simulation). |
+| `stop_sim.sh` | Not a node. Stops every simulation launch with all of its nodes, and nodes left behind by an earlier launch: `ros2 run neo_simulation2 stop_sim.sh`. Nodes that ignore Ctrl-C are stopped with SIGTERM or SIGKILL. See [README, Stop the simulation](../README.md#18-stop-the-simulation). |
 | `check_urdf_for_ros2_control.py` | Not a node. Run it after editing the robot description: it reports text that prevents the controllers from starting. |
 
 ## Robot description

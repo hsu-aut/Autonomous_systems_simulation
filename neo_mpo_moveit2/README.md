@@ -41,8 +41,9 @@ neo_mpo_moveit2/
 └── neo_ur_moveit_config/
     ├── launch/neo_ur_moveit.launch.py    starts move_group and the MoveIt RViz window
     ├── srdf/mpo_700.srdf.xacro           planning groups (ur_manipulator, gripper), named poses
-    │                                     (including the pick-and-place stages of
-    │                                     Stage_values.md), allowed collisions between robot links
+    │                                     (including the arm poses home, pregrasp and
+    │                                     grasp of Stage_values.md), allowed
+    │                                     collisions between robot links
     ├── srdf/robotiq_2f_140.xacro         gripper part of the SRDF: named states open (0.07),
     │                                     close (0.63) and grasp_cube (0.265, closed around the
     │                                     80 mm cube), no collision checking for the contact pads

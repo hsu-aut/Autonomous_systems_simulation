@@ -32,19 +32,18 @@
       <joint name="${prefix_value}wrist_2_joint" value="0" />
       <joint name="${prefix_value}wrist_3_joint" value="0" />
     </group_state>
-    <group_state name="test_configuration" group="ur_manipulator">
-      <joint name="${prefix_value}elbow_joint" value="1.4" />
-      <joint name="${prefix_value}shoulder_lift_joint" value="-1.62" />
-      <joint name="${prefix_value}shoulder_pan_joint" value="1.54" />
-      <joint name="${prefix_value}wrist_1_joint" value="-1.2" />
-      <joint name="${prefix_value}wrist_2_joint" value="-1.6" />
-      <joint name="${prefix_value}wrist_3_joint" value="-0.11" />
-    </group_state>
 
-    <!-- Stages of the pick-and-place mission (Stage_values.md). Joint values in the
+    <!-- Arm poses of the pick-and-place mission (Stage_values.md). Joint values in the
          order shoulder_pan, shoulder_lift, elbow, wrist_1, wrist_2, wrist_3 (rad).
-         All poses except home are valid only with the robot at the recorded pick and
-         place positions.
+         Three poses cover the whole mission; pregrasp and grasp are used at the pick
+         table and at the place table:
+           home      travel pose, arm folded above the platform
+           pregrasp  gripper 16 cm above the grasp/place point: before grasping, lifting
+                     the cube, before placing, moving away after placing
+           grasp     gripper at the grasp/place point: grasping and placing the cube
+         The recorded lift, pre-place and retreat poses differed from pregrasp, and the
+         recorded place pose from grasp, by at most 0.11 rad per joint. pregrasp and
+         grasp are valid only with the robot at the pick or place position.
          wrist_3 is turned by 90 deg compared with the recorded values (e.g. grasp -1.91 ->
          -0.34): the cube is square, so the fingers line up with its faces either way, and
          the gripper then turns only about 20 deg from home instead of 110 deg. The grasp
@@ -59,13 +58,9 @@
         <joint name="${prefix_value}wrist_3_joint" value="${w3}" />
       </group_state>
     </xacro:macro>
-    <xacro:stage_pose name="home"      pan="1.49" lift="-2.50" elbow="2.00" w1="0.00"  w2="-1.49" w3="0.01"/>
-    <xacro:stage_pose name="pre_grasp" pan="1.23" lift="-1.97" elbow="2.27" w1="-1.89" w2="-1.57" w3="-0.33"/>
-    <xacro:stage_pose name="grasp"     pan="1.23" lift="-1.79" elbow="2.48" w1="-2.25" w2="-1.57" w3="-0.34"/>
-    <xacro:stage_pose name="lift"      pan="1.23" lift="-1.92" elbow="2.35" w1="-2.00" w2="-1.57" w3="-0.34"/>
-    <xacro:stage_pose name="pre_place" pan="1.17" lift="-1.96" elbow="2.27" w1="-1.88" w2="-1.56" w3="-0.39"/>
-    <xacro:stage_pose name="place"     pan="1.18" lift="-1.80" elbow="2.47" w1="-2.24" w2="-1.57" w3="-0.40"/>
-    <xacro:stage_pose name="retreat"   pan="1.18" lift="-1.97" elbow="2.28" w1="-1.88" w2="-1.57" w3="-0.40"/>
+    <xacro:stage_pose name="home"     pan="1.49" lift="-2.50" elbow="2.00" w1="0.00"  w2="-1.49" w3="0.01"/>
+    <xacro:stage_pose name="pregrasp" pan="1.23" lift="-1.97" elbow="2.27" w1="-1.89" w2="-1.57" w3="-0.33"/>
+    <xacro:stage_pose name="grasp"    pan="1.23" lift="-1.79" elbow="2.48" w1="-2.25" w2="-1.57" w3="-0.34"/>
 
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
     <disable_collisions link1="base_footprint" link2="cabinet_link" reason="Adjacent"/>

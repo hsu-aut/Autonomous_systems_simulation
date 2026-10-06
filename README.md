@@ -48,6 +48,17 @@ With the simulation you can:
 Run all commands in the workspace folder `neobotix_workspace` (see
 [Installation.md](Installation.md#4-create-the-workspace-and-clone-the-repository)).
 
+The robot has three parts that you move separately:
+
+| Part | What it is | Moved by | Section |
+| --- | --- | --- | --- |
+| Mobile platform | The base with the wheels; it carries the arm | Keyboard or navigation (Nav2) | [1.3](#13-mobile-platform-drive-with-the-keyboard-optional), [1.4](#14-mobile-platform-drive-autonomously-to-the-pick-place-and-home-positions) |
+| Manipulator arm | The UR10 arm on top of the platform | MoveIt | [1.5](#15-manipulator-arm-move-to-the-mission-poses) |
+| Gripper | The Robotiq 2F-140 at the end of the arm | Gripper action | [1.6](#16-gripper-open-and-close), [1.7](#17-gripper-attach-and-detach-the-cube) |
+
+Each command moves only its own part. A navigation goal drives the platform and leaves the arm in its
+pose; an arm goal moves the arm, and the platform stays where it is.
+
 ### 1.1 Prepare a terminal
 
 After the installation, every new terminal is ready to use. To check a terminal, run:
@@ -143,9 +154,10 @@ For example, option 2 on the driving track:
 ros2 launch neo_simulation2 bringup.launch.py navigation_rviz:=True world:=neo_track1 map:=neo_track1
 ```
 
-### 1.3 Drive with the keyboard
+### 1.3 Mobile platform: drive with the keyboard (Optional)
 
-Without navigation (options 1 and 3), you can drive the robot yourself. In a second terminal, run:
+Without navigation (options 1 and 3), you can drive the mobile platform yourself. In a second
+terminal, run:
 
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
@@ -166,38 +178,94 @@ press.
 > **Note:** Do not drive with the keyboard while navigation is running (options 2 and 4): Nav2 sends
 > its own drive commands, and the two would conflict.
 
-### 1.4 Drive to the pick-up, drop and home positions
+### 1.4 Mobile platform: drive autonomously to the pick, place and home positions
 
-With navigation running in `neo_workshop` (option 2 or 4), you can send the robot to the positions of
-the pick-and-place mission ([Stage_values.md](Stage_values.md#2-robot-positions)). Run one of these
-commands in a second terminal:
+These commands drive the **mobile platform** to the positions of the pick-and-place mission
+([Stage_values.md](Stage_values.md#2-robot-positions)). Only the platform moves; the arm keeps its
+current pose. To move the arm, see [section 1.5](#15-manipulator-arm-move-to-the-mission-poses).
 
-**Pick-up position**, in front of the pick table (x -1.51 m, y -3.58 m, yaw -90°):
+1. Start the simulation with navigation in `neo_workshop` (option 2 or 4).
+2. Make sure the arm is in its `home` pose, the travel pose: folded above the platform. The simulation
+   starts with the arm in this pose. If you have moved the arm (option 4), move it back to `home` first
+   ([section 1.5](#15-manipulator-arm-move-to-the-mission-poses)); in the mission, this is stage S1.
+3. In a second terminal, run the command of the position.
+
+**Pick position**, in front of the pick table (stage S2; x -1.51 m, y -3.58 m, yaw -90°):
 
 ```bash
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: map}, pose: {position: {x: -1.51, y: -3.58}, orientation: {z: -0.7071, w: 0.7071}}}}"
 ```
 
-**Drop position**, in front of the place table (x -4.65 m, y -3.56 m, yaw -90°):
+**Place position**, in front of the place table (stage S6; x -4.65 m, y -3.56 m, yaw -90°):
 
 ```bash
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: map}, pose: {position: {x: -4.65, y: -3.56}, orientation: {z: -0.7071, w: 0.7071}}}}"
 ```
 
-**Home**, the start position (x -0.02 m, y 0.00 m, yaw 0°):
+**Home position**, back at the start (stage S10; x -0.02 m, y 0.00 m, yaw 0°):
 
 ```bash
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: map}, pose: {position: {x: -0.02, y: 0.0}, orientation: {z: 0.0, w: 1.0}}}}"
 ```
 
-The command ends when the robot has reached the goal; Ctrl-C cancels the goal. How to send the robot
-to other positions is described in
-[neo_nav2_bringup/README.md](neo_nav2_bringup/README.md#from-a-terminal).
+The command ends when the platform has reached the goal; Ctrl-C cancels the goal, and the platform
+stops. How to send the platform to other positions is described in
+[neo_nav2_bringup/README.md](neo_nav2_bringup/README.md#from-a-terminal). You can also send goals
+in the navigation RViz window with **Nav2 Goal**
+([Launch_arguments.md](Launch_arguments.md#22-option-2-navigation-goals)).
 
-### 1.5 Open and close the gripper
+> **Note:** *Home* means two different things: the **home position** of the platform on the map (this
+> section) and the **`home` pose** of the arm, its travel pose ([section 1.5](#15-manipulator-arm-move-to-the-mission-poses)).
+> Each is set with its own command.
+
+### 1.5 Manipulator arm: move to the mission poses
+
+These steps move the **manipulator arm** (the UR10) into the poses of the pick-and-place mission
+([Stage_values.md](Stage_values.md#3-arm-poses)). Only the arm moves; the platform stays where it is.
+To move the platform, see [section 1.3](#13-mobile-platform-drive-with-the-keyboard-optional) and
+[section 1.4](#14-mobile-platform-drive-autonomously-to-the-pick-place-and-home-positions).
+
+The arm needs only three poses, stored in MoveIt as named states of the planning group
+`ur_manipulator`:
+
+| Named state | Pose of the arm | Platform at |
+| --- | --- | --- |
+| `home` | Travel pose: arm folded above the platform | Any position |
+| `pregrasp` | Gripper 16 cm above the cube or the place point | Pick or place position |
+| `grasp` | Gripper at the cube or the place point | Pick or place position |
+
+`pregrasp` and `grasp` reach over a table. They are used at both tables: at the place table, the same
+two poses put the cube down. They fit only when the platform is at the pick or place position
+([section 1.4](#14-mobile-platform-drive-autonomously-to-the-pick-place-and-home-positions)).
+
+At each table, the arm moves `pregrasp` → `grasp` → `pregrasp`, and the gripper works in between:
+
+| Step | At the pick table | At the place table |
+| --- | --- | --- |
+| 1 | `pregrasp`, gripper open | `pregrasp`, holding the cube |
+| 2 | `grasp` | `grasp` |
+| 3 | Close the gripper, attach the cube | Detach the cube, open the gripper |
+| 4 | `pregrasp`: the cube is lifted | `pregrasp`: the gripper moves away from the cube |
+
+The gripper commands of step 3 are in [section 1.6](#16-gripper-open-and-close) and
+[section 1.7](#17-gripper-attach-and-detach-the-cube).
+
+To move the arm, start the simulation with the MoveIt RViz window (option 3 or 4), and in RViz:
+
+1. In the **MotionPlanning** panel, select the planning group `ur_manipulator`.
+2. Under **Goal State**, select the named state, for example `home`.
+3. Click **Plan & Execute**.
+
+MoveIt plans a path that avoids collisions of the robot with itself. The tables are not part of
+MoveIt's planning scene unless your own program adds them. In your own program, use the named states
+as named targets; see [Stage_values.md](Stage_values.md#4-using-the-values-in-a-moveit-client).
+
+The gripper is moved separately ([section 1.6](#16-gripper-open-and-close)).
+
+### 1.6 Gripper: open and close
 
 In a second terminal:
 
@@ -215,16 +283,14 @@ ros2 action send_goal /robotiq_gripper/robotiq_gripper_controller/gripper_cmd \
   control_msgs/action/GripperCommand "{command: {position: 0.63, max_effort: 60.0}}"
 ```
 
-### 1.6 Attach and detach the cube
+### 1.7 Gripper: attach and detach the cube
 
 In Gazebo, the gripper fingers alone cannot hold the cube reliably. To carry it, close the gripper
 around the cube and then attach the cube to the gripper. To put it down, detach it and then open the
 gripper. This works in `neo_workshop` and `neo_table`.
 
 Close the gripper around the 80 mm cube with `position: 0.265`: the fingers then end at the cube's
-faces. The fingers and the cube do not collide (`spawn_objects` switches this off when it places the
-cube), so a cube that is not exactly centred between the fingers is not pushed away; the cube is held
-by `attach`.
+faces.
 
 **Close the gripper around the cube** (in RViz: gripper **Goal State** `grasp_cube`):
 
@@ -252,7 +318,7 @@ ros2 service call /link_attacher/detach neo_link_attacher/srv/Attach \
   far away from it. Close the gripper around the cube first.
 - More details: [neo_link_attacher/README.md](neo_link_attacher/README.md).
 
-### 1.7 Stop the simulation
+### 1.8 Stop the simulation
 
 In any terminal, run:
 
